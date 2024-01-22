@@ -2,7 +2,7 @@
   "name": "client",
   "private": true,
   "version": "1.0.0",
-  "author": "Faijan Khan",
+  "author": "Bayes Team",
   "type": "module",
   "scripts": {
     "dev": "vite ",
