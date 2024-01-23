@@ -1,43 +1,14 @@
 import { Router } from "express";
 import dotnet from "dotenv";
-// import { Configuration, OpenAIApi } from "openai";
 import user from "../helpers/user.js";
 import jwt from "jsonwebtoken";
 import chat from "../helpers/chat.js";
-// import { getChatId } from "../helpers/chat.js";
 import { ObjectId } from "mongodb";
-
-
-import nodemailer from "nodemailer";
+import assistantFunctions from "../helpers/assist.js";
 
 dotnet.config();
 
 let router = Router();
-let chatId;
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_EMAIL,
-    pass: process.env.MAIL_SECRET,
-  },
-});
-
-const sendErrorEmail = (error) => {
-  const mailOptions = {
-    from: process.env.MAIL_EMAIL,
-    to: process.env.MONITOR_EMAIL,
-    subject: "Error Occurred",
-    text: error.toString(),
-  };
-
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.error("Error sending email:", err);
-    } else {
-      console.log("Email sent:", info.response);
-    }
-  });
-};
 
 const CheckUser = async (req, res, next) => {
   jwt.verify(
@@ -77,17 +48,52 @@ const CheckUser = async (req, res, next) => {
   );
 };
 
-// const configuration = new Configuration({
-//   organization: process.env.OPENAI_ORGANIZATION,
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
+
 
 router.get("/", (req, res) => {
-  res.send("Welcome to chatGPT api v1");
+  res.send("Welcome to Assist api v1");
 });
 
+router.get("/getAssistant",async (req, res) => {
+    const respose =await assistantFunctions.getAssistant()
+    console.log(respose);
+    res.status(200).json({
+      status: 200,
+      data: respose,
+    });
+});
 
-const openai = 'new OpenAIApi()';
+router.post("/createThread",async (req, res) => {
+    const respose =await assistantFunctions.createThread()
+    console.log(respose);
+    res.status(200).json({
+      status: 200,
+      data: respose,
+    });
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const openai =' new OpenAIApi()';
+
+
+
+
+
+
+
+
 // Example API endpoint to get and update model type
 router.get("/modelType", CheckUser,async (req, res) => {
   const userId = req.params.userId;

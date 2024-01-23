@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- get your api key from https://openai.com/api/
+- Get your api key from https://openai.com/api/
 
 Make sure you have installed all of the following prerequisites on your development machine:
 
