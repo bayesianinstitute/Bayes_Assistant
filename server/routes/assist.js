@@ -54,319 +54,315 @@ router.get("/", (req, res) => {
   res.send("Welcome to Assist api v1");
 });
 
-router.get("/getAssistant",async (req, res) => {
-    const respose =await assistantFunctions.getAssistant()
-    console.log(respose);
-    res.status(200).json({
-      status: 200,
-      data: respose,
-    });
-});
-
-router.post("/createThread",async (req, res) => {
-    const respose =await assistantFunctions.createThread()
-    console.log(respose);
-    res.status(200).json({
-      status: 200,
-      data: respose,
-    });
-})
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-const openai =' new OpenAIApi()';
-
-
-
-
-
-
-
-
-// Example API endpoint to get and update model type
-router.get("/modelType", CheckUser,async (req, res) => {
-  const userId = req.params.userId;
-
+router.get("/getAssistant", async (req, res) => {
   try {
-    // Call your getModelType function
-    const modelType = await chat.getModelType(userId);
-
-    res.status(200).json({
-      status: 200,
-      data: {
-        modelType,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-  }
-});
-
-router.put("/modelType",CheckUser, async (req, res) => {
-  const userId = req.body.userId;
-  const modelType = req.body.modelType;
-  console.log("modelType: " + modelType);
-  try {
-    // Call your saveModelType function
-    await chat.saveModelType(userId, modelType);
-
-    res.status(200).json({
-      status: 200,
-      message: "Model type updated successfully",
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-  }
-});
-
-
-
-
-router.post("/", CheckUser, async (req, res) => {
-  const { prompt, userId } = req.body;
-
-  chatId = new ObjectId().toHexString();
-
-  let response = {};
-  console.log("chatId in router in post :", chatId);
-
-  let conversation =  [
-    {
-      role: "assistant",
-      content:
-        " Your name is Bayes CHAT-AI.  Strictly follow the users instructions. Please Understand Query try to reply to it in Efficient Way.  You were created by Bayes Solution  .You Should able to translate in different Language if user ask.Give content in Mardown Format Only",
-    },
-  ];
-  console.log("prompt in post :", prompt);
-
-  try {
-    const modelType =await chat.getModelType(userId);
-    console.log("modelType in post :", modelType);
-
-    conversation.push({ role: "user", content: prompt });
-
-    response = await openai.createChatCompletion({
-      model: modelType,
-      messages: conversation,
-      temperature: 0.6,
-    });
-    // console.log("response in post :", response);
-
-    if (response.data?.choices?.[0]?.message?.content) {
-      let assistantReply = response.data.choices[0].message.content;
-
-      response.openai = assistantReply;
-      response.db = await chat.newResponse(prompt, response, userId, chatId);
-
-      conversation.push({ "role": "assistant", "content": assistantReply });
-
-
-      await chat.saveConversation(chatId, conversation); // Save conversation to the database
-    }
-  } catch (err) {
-    sendingError = "Error in post" + err;
-
-    // sendErrorEmail(sendingError);
-
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-    return;
-  }
-
-  if (response.db && response.openai) {
-    // conversationMemory[chatId] = conversation;
-
-    res.status(200).json({
-      status: 200,
-      message: "Success",
-      data: {
-        _id: response.db["chatId"],
-        content: response.openai,
-      },
-    });
-  } else {
-    sendingError = "Error in response chat" + err;
-
-    // sendErrorEmail(sendingError);
-
-    res.status(500).json({
-      status: 500,
-      message: "Incomplete response",
-    });
-  }
-});
-
-router.put("/", CheckUser, async (req, res) => {
-  const { prompt, userId, chatId } = req.body;
-  console.log("chatId in router in put :", chatId);
-  console.log("prompt in put :", prompt);
-
-  let response = {};
-
-  // load chat data from database 
-  let conversation = await chat.getConversation(chatId);
-  let modelType =await chat.getModelType(userId);
-  console.log("modelType in post :", modelType);
-
-
-
-  try {
-
-    // Use the conversation object here
-    console.log("Conversation:", conversation);
-
-    conversation.push({ "role": "user", "content": prompt });
-
-
-    response = await openai.createChatCompletion({
-      model: modelType,
-      messages: conversation,
-      temperature: 0.6,
-    });
-
-    if (response.data?.choices?.[0]?.message?.content) {
-      let assistantReply = response.data.choices[0].message.content;
- 
-      response.openai = assistantReply;
-      response.db = await chat.updateChat(chatId, prompt, response, userId);
-
-      conversation.push({ "role": "assistant", "content": assistantReply });
-
-      await chat.saveConversation(chatId, conversation); // Save updated conversation to the database
-    }
-  } catch (err) {
-    sendingError = "Error in put chat" + err;
-
-    sendErrorEmail(err);
-
-    console.log("err :" + err);
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-    return;
-  }
-
-  if (response.db && response.openai) {
-    // conversationMemory[chatId] = conversation;
-
-    res.status(200).json({
-      status: 200,
-      message: "Success",
-      data: {
-        content: response.openai,
-      },
-    });
-  } else {
-    // sendErrorEmail(sendingError);
-
-    res.status(500).json({
-      status: 500,
-      message: "Incomplete response",
-    });
-  }
-});
-
-router.get("/saved", CheckUser, async (req, res) => {
-  const { userId } = req.body;
-  const { chatId = null } = req.query;
-
-  let response = null;
-
-  try {
-    response = await chat.getChat(userId, chatId);
-  } catch (err) {
-    if (err?.status === 404) {
-      res.status(404).json({
-        status: 404,
-        message: "Not found",
-      });
-    } else {
-      sendingError = "Error in getChat : ${err}";
-      // sendErrorEmail(sendingError);
+    const response = await assistantFunctions.getAssistant();
+    
+    // Check if response is valid or handle accordingly
+    if (!response) {
       res.status(500).json({
         status: 500,
-        message: err,
+        message: 'Failed to get assistant data',
       });
-    }
-  } finally {
-    if (response) {
+    } else {
       res.status(200).json({
         status: 200,
-        message: "Success",
         data: response,
       });
     }
+  } catch (error) {
+    console.error("Error in getAssistant route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
   }
 });
 
-router.get("/history", CheckUser, async (req, res) => {
-  const { userId } = req.body;
 
-  let response = null;
-
+router.post("/createThread", async (req, res) => {
   try {
-    response = await chat.getHistory(userId);
-  } catch (err) {
-    sendingError = "Error in getting history " + err;
-    // sendErrorEmail(sendingError);
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-  } finally {
-    if (response) {
+    const response = await assistantFunctions.createThread();
+    
+    // Check if response is valid or handle accordingly
+    if (!response) {
+      res.status(500).json({
+        status: 500,
+        message: 'Failed to create thread',
+      });
+    } else {
       res.status(200).json({
         status: 200,
-        message: "Success",
         data: response,
       });
     }
-  }
-});
-
-router.delete("/all", CheckUser, async (req, res) => {
-  const { userId } = req.body;
-
-  let response = null;
-
-  try {
-    response = await chat.deleteAllChat(userId);
-  } catch (err) {
-    sendingError = "Error in deleting chat" + err;
-    // sendErrorEmail(sendingError);
-
+  } catch (error) {
+    console.error("Error in createThread route:", error);
     res.status(500).json({
       status: 500,
-      message: err,
+      message: 'Internal Server Error',
     });
-  } finally {
-    if (response) {
-      res.status(200).json({
-        status: 200,
-        message: "Success",
-      });
-    }
   }
 });
+
+router.post("/getThread", async (req, res) => {
+  try {
+    const { threadId } = req.body;
+
+    // Check if threadId is provided
+    if (!threadId) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Thread ID is required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.getThread({ threadId });
+    
+    // Check if response is valid or handle accordingly
+    if (response.error) {
+      res.status(500).json({
+        status: 500,
+        message: response.message,
+      });
+    } else {
+      res.status(200).json({
+        status: 200,
+        data: response,
+      });
+    }
+  } catch (error) {
+    console.error("Error in getThread route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+router.post("/deleteThread", async (req, res) => {
+  try {
+    const { threadId } = req.body;
+
+    // Check if threadId is provided
+    if (!threadId) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Thread ID is required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.deleteThread({ threadId });
+
+    // Check if response is valid or handle accordingly
+    if (response.error) {
+      res.status(500).json({
+        status: 500,
+        message: response.message,
+      });
+    } else {
+      res.status(200).json({
+        status: 200,
+        data: response,
+      });
+    }
+  } catch (error) {
+    console.error("Error in deleteThread route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+
+
+router.post("/addMessage", async (req, res) => {
+  try {
+    const { threadId, message, messageId, userId, name } = req.body;
+
+    // Check if all required parameters are provided
+    if (!threadId || !message || !messageId || !userId || !name) {
+      return res.status(400).json({
+        status: 400,
+        message: 'All parameters (threadId, message, messageId, userId, name) are required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.addMessage({
+      threadId,
+      message,
+      messageId,
+      userId,
+      name,
+    });
+
+    res.status(200).json({
+      status: 200,
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error in addMessage route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+
+router.post("/getMessages", async (req, res) => {
+  try {
+    const { threadId } = req.body;
+
+    // Check if threadId is provided
+    if (!threadId) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Thread ID is required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.getMessages({ threadId });
+
+    res.status(200).json({
+      status: 200,
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error in getMessages route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+
+router.post("/startRun", async (req, res) => {
+  try {
+    const { threadId, instructions } = req.body;
+
+    // Check if threadId is provided
+    if (!threadId) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Thread ID is required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.startRun({ threadId, instructions });
+
+    res.status(200).json({
+      status: 200,
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error in startRun route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+
+router.post("/getRun", async (req, res) => {
+  try {
+    const { threadId, runId } = req.body;
+
+    // Check if both threadId and runId are provided
+    if (!threadId || !runId) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Both threadId and runId are required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.getRun({ threadId, runId });
+
+    res.status(200).json({
+      status: 200,
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error in getRun route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+// router.post("/submitOutputs", async (req, res) => {
+//   try {
+//     const { threadId, runId, tool_outputs } = req.body;
+
+//     // Check if both threadId and runId are provided
+//     if (!threadId || !runId) {
+//       return res.status(400).json({
+//         status: 400,
+//         message: 'Both threadId and runId are required in the request body',
+//       });
+//     }
+
+//     const response = await assistantFunctions.submitOutputs({
+//       threadId,
+//       runId,
+//       tool_outputs,
+//     });
+
+//     res.status(200).json({
+//       status: 200,
+//       data: response,
+//     });
+//   } catch (error) {
+//     console.error("Error in submitOutputs route:", error);
+//     res.status(500).json({
+//       status: 500,
+//       message: 'Internal Server Error',
+//     });
+//   }
+// });
+
+
+router.post("/chatCompletion", async (req, res) => {
+  try {
+    const { model, max_tokens, temperature, messages, tools } = req.body;
+
+    // Check if required parameters are provided
+    if (!model || !messages) {
+      return res.status(400).json({
+        status: 400,
+        message: 'Both model and messages are required in the request body',
+      });
+    }
+
+    const response = await assistantFunctions.chatCompletion({
+      model,
+      max_tokens,
+      temperature,
+      messages,
+      tools,
+    });
+
+    res.status(200).json({
+      status: 200,
+      data: response,
+    });
+  } catch (error) {
+    console.error("Error in chatCompletion route:", error);
+    res.status(500).json({
+      status: 500,
+      message: 'Internal Server Error',
+    });
+  }
+});
+
+
+
+
+
+
 
 export default router;

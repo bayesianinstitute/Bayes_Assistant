@@ -19,16 +19,6 @@ const assistantFunctions = {
             throw error;
         }
     },
-
-    run: async () => {
-        try {
-            const assistantData = await assistantFunctions.getAssistant();
-            console.log('Assistant data:', assistantData);
-        } catch (error) {
-            console.error('Error:', error.message);
-        }
-    },
-
     createThread: async () => {
         try {
             return await openai.beta.threads.create();
@@ -125,18 +115,21 @@ const assistantFunctions = {
 
     submitOutputs: async ({ threadId, runId, tool_outputs }) => {
         try {
-            return await openai.beta.threads.runs.submitToolOutputs(
-                threadId,
-                runId,
-                {
-                    tool_outputs: tool_outputs,
-                }
-            );
+          const options = {
+            threadId,
+            runId,
+          };
+      
+          if (tool_outputs) {
+            options.tool_outputs = tool_outputs;
+          }
+      
+          return await openai.beta.threads.runs.submitToolOutputs(options);
         } catch (error) {
-            console.log(error.name, error.message);
-            throw error;
+          console.log(error.name, error.message);
+          throw error;
         }
-    },
+      },
 
     chatCompletion: async ({ model = 'gpt-3.5-turbo-1106', max_tokens = 2048, temperature = 0, messages, tools }) => {
         let options = { messages, model, temperature, max_tokens };
