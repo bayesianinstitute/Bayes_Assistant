@@ -3,9 +3,8 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import dotnet from 'dotenv'
 import { connectDB } from './db/connection.js'
-import ChatRoute from './routes/chat.js'
-import UserRoute from './routes/user.js'
-import AssistRoute from './routes/assist.js'
+
+import AssistRoute from './routes'
 import path from 'path'
 
 dotnet.config()

@@ -243,11 +243,10 @@ router.post("/getMessages", async (req, res) => {
   }
 });
 
-
 router.post("/startRun", async (req, res) => {
   try {
     const { threadId, instructions } = req.body;
-
+    const userID="Faijan"
     // Check if threadId is provided
     if (!threadId) {
       return res.status(400).json({
@@ -257,6 +256,10 @@ router.post("/startRun", async (req, res) => {
     }
 
     const response = await assistantFunctions.startRun({ threadId, instructions });
+    console.log(response)
+
+    await assistantFunctions.saveRunID(userID, response.id); // Save conversation to the database
+
 
     res.status(200).json({
       status: 200,
@@ -270,6 +273,7 @@ router.post("/startRun", async (req, res) => {
     });
   }
 });
+
 
 
 router.post("/getRun", async (req, res) => {
@@ -298,7 +302,6 @@ router.post("/getRun", async (req, res) => {
     });
   }
 });
-
 // router.post("/submitOutputs", async (req, res) => {
 //   try {
 //     const { threadId, runId, tool_outputs } = req.body;

@@ -155,7 +155,7 @@ const assistantFunctions = {
       },
       
 
-    startRun: async ({ threadId, instructions }) => {
+      startRun: async ({ threadId, instructions }) => {
         try {
             const today = new Date();
             let options = {
@@ -175,6 +175,25 @@ const assistantFunctions = {
             throw error;
         }
     },
+
+    saveRunID: (userId, runId) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            const result = await db.collection(collections.Run).insertOne
+            ({
+              userId,
+              runId,
+              createdAt: new Date(),
+            });
+    
+            console.log(result);
+    
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
 
     getRun: async ({ threadId, runId }) => {
         try {
@@ -202,6 +221,7 @@ const assistantFunctions = {
           throw error;
         }
       },
+
 
     chatCompletion: async ({ model = 'gpt-3.5-turbo-1106', max_tokens = 2048, temperature = 0, messages, tools }) => {
         let options = { messages, model, temperature, max_tokens };
