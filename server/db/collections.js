@@ -6,5 +6,6 @@ export default {
     SETTING : "setting",
     THREAD : "thread",
     MESSAGE : "message",
+    Run: "run"
     
 }
