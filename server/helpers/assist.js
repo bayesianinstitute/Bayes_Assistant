@@ -155,17 +155,12 @@ const assistantFunctions = {
       },
       
 
-      startRun: async ({ threadId, instructions }) => {
+      startRun: async ({ threadId }) => {
         try {
             const today = new Date();
             let options = {
                 assistant_id: process.env.OPENAI_ASSISTANT_ID,
             };
-
-            if (instructions) {
-                options.instructions = instructions;
-            }
-
             return await openai.beta.threads.runs.create(
                 threadId,
                 options

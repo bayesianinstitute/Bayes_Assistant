@@ -3,8 +3,8 @@ import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import dotnet from 'dotenv'
 import { connectDB } from './db/connection.js'
-// import ChatRoute from './routes/chat.js'
-// import UserRoute from './routes/user.js'
+import ChatRoute from './routes/chat.js'
+import UserRoute from './routes/user.js'
 import AssistRoute from './routes/assist.js'
 import path from 'path'
 
@@ -21,8 +21,8 @@ app.use(cookieParser())
 app.use(express.json({ limit: '50mb' }))
 
 // api route
-// app.use('/api/chat/', ChatRoute)
-// app.use('/api/user/', UserRoute)
+app.use('/api/chat/', ChatRoute)
+app.use('/api/user/', UserRoute)
 app.use('/api/assist/', AssistRoute)
 
 // front end react route

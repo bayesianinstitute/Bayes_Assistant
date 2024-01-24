@@ -197,6 +197,8 @@ router.post("/addMessage", async (req, res) => {
       });
     }
 
+    
+
     const response = await assistantFunctions.addMessage({
       threadId,
       message
@@ -215,7 +217,6 @@ router.post("/addMessage", async (req, res) => {
   }
 });
 
-
 router.post("/getMessages", async (req, res) => {
   try {
     const { threadId } = req.body;
@@ -228,11 +229,42 @@ router.post("/getMessages", async (req, res) => {
       });
     }
 
-    const response = await assistantFunctions.getMessages({ threadId });
+    const response = await openai.beta.threads.messages.list(threadId);
+
+    const messages = response.data;
+    let firstUserMessage = null;
+    let firstAssistantMessage = null;
+
+    for (const message of messages) {
+      if (["user", "assistant"].includes(message.role)) {
+        // Assuming you have some way to identify the content type and value
+        for (const content of message.content) {
+          if (content.type === "text") {
+            // Assuming you have some way to display the content
+            const messageText = `${message.role}: ${content.text.value}`;
+
+            if (message.role === "user" && !firstUserMessage) {
+              firstUserMessage = messageText;
+            } else if (message.role === "assistant" && !firstAssistantMessage) {
+              firstAssistantMessage = messageText;
+            }
+
+            console.log(messageText);
+
+            if (firstUserMessage && firstAssistantMessage) {
+              break;
+            }
+          }
+        }
+      }
+    }
 
     res.status(200).json({
       status: 200,
-      data: response,
+      data: {
+        firstUserMessage,
+        firstAssistantMessage,
+      },
     });
   } catch (error) {
     console.error("Error in getMessages route:", error);
@@ -243,9 +275,12 @@ router.post("/getMessages", async (req, res) => {
   }
 });
 
+
+
+
 router.post("/startRun", async (req, res) => {
   try {
-    const { threadId, instructions } = req.body;
+    const { threadId} = req.body;
     const userID="Faijan"
     // Check if threadId is provided
     if (!threadId) {
@@ -255,7 +290,7 @@ router.post("/startRun", async (req, res) => {
       });
     }
 
-    const response = await assistantFunctions.startRun({ threadId, instructions });
+    const response = await assistantFunctions.startRun({ threadId });
     console.log(response)
 
     await assistantFunctions.saveRunID(userID, response.id); // Save conversation to the database

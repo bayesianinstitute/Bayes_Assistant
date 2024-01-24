@@ -6,7 +6,7 @@ import jwt from "jsonwebtoken";
 import chat from "../helpers/chat.js";
 // import { getChatId } from "../helpers/chat.js";
 import { ObjectId } from "mongodb";
-
+import assistantFunctions from "../helpers/assistChat.js";
 
 import nodemailer from "nodemailer";
 
@@ -132,50 +132,39 @@ router.put("/modelType",CheckUser, async (req, res) => {
 
 
 
-
 router.post("/", CheckUser, async (req, res) => {
+  let response = {};
+
+  try{
   const { prompt, userId } = req.body;
 
-  chatId = new ObjectId().toHexString();
-
-  let response = {};
+  const chatId = await assistantFunctions.createThread()
   console.log("chatId in router in post :", chatId);
 
-  let conversation =  [
-    {
-      role: "assistant",
-      content:
-        " Your name is Bayes CHAT-AI.  Strictly follow the users instructions. Please Understand Query try to reply to it in Efficient Way.  You were created by Bayes Solution  .You Should able to translate in different Language if user ask.Give content in Mardown Format Only",
-    },
-  ];
-  console.log("prompt in post :", prompt);
+  const addMessage=await assistantFunctions.addMessage(chatId,prompt)
+  console.log("addMessage in router in post :", addMessage);
+  const startRun=await assistantFunctions.startRun(chatId)
+  console.log("startRun in router in post :", startRun);
 
-  try {
-    const modelType =await chat.getModelType(userId);
-    console.log("modelType in post :", modelType);
+  const result=await assistantFunctions.getRunStatus(chatId,startRun)
+  console.log("result in router in post :", result);
+  if (result !== true) {
+    console.log("Function did not complete successfully.");
+  }
+  const mess=await assistantFunctions.getMessages(chatId)
+  console.log("data in router in post :", mess);
+  const user=mess.data.UserMessage
+  const assist=mess.data.AssistantMessage
+  console.log("User in POst",user)
+  console.log("Assist in POst",assist)
+  response.openai = assist;
+  response.db = await chat.newResponse(prompt, response, userId, chatId);
 
-    conversation.push({ role: "user", content: prompt });
+  console.log("respose",response);
 
-    response = await openai.createChatCompletion({
-      model: modelType,
-      messages: conversation,
-      temperature: 0.6,
-    });
-    // console.log("response in post :", response);
-
-    if (response.data?.choices?.[0]?.message?.content) {
-      let assistantReply = response.data.choices[0].message.content;
-
-      response.openai = assistantReply;
-      response.db = await chat.newResponse(prompt, response, userId, chatId);
-
-      conversation.push({ "role": "assistant", "content": assistantReply });
-
-
-      await chat.saveConversation(chatId, conversation); // Save conversation to the database
-    }
+    
   } catch (err) {
-    sendingError = "Error in post" + err;
+    // sendingError = "Error in post" + err;
 
     // sendErrorEmail(sendingError);
 
@@ -215,42 +204,58 @@ router.put("/", CheckUser, async (req, res) => {
   console.log("prompt in put :", prompt);
 
   let response = {};
+  try{
+    const addMessage=await assistantFunctions.addMessage(chatId,prompt)
+    const startRun=await assistantFunctions.startRun(chatId)
+  
+    const result=await assistantFunctions.getRunStatus(chatId,startRun)
 
-  // load chat data from database 
-  let conversation = await chat.getConversation(chatId);
-  let modelType =await chat.getModelType(userId);
-  console.log("modelType in post :", modelType);
+    const mess=await assistantFunctions.getMessages(chatId)
+    console.log("data in router in post :", mess);
+    const user=mess.data.UserMessage
+    const assist=mess.data.AssistantMessage
+    console.log("User in PUT",user)
+    console.log("Assist in PUT",assist)
+    response.openai = assist;
+
+  response.db = await chat.updateChat(user, assist, userId, chatId);
+  
+
+  // // load chat data from database 
+  // let conversation = await chat.getConversation(chatId);
+  // let modelType =await chat.getModelType(userId);
+  // console.log("modelType in post :", modelType);
 
 
 
-  try {
+  // try {
 
-    // Use the conversation object here
-    console.log("Conversation:", conversation);
+  //   // Use the conversation object here
+  //   console.log("Conversation:", conversation);
 
-    conversation.push({ "role": "user", "content": prompt });
+  //   conversation.push({ "role": "user", "content": prompt });
 
 
-    response = await openai.createChatCompletion({
-      model: modelType,
-      messages: conversation,
-      temperature: 0.6,
-    });
+  //   response = await openai.createChatCompletion({
+  //     model: modelType,
+  //     messages: conversation,
+  //     temperature: 0.6,
+  //   });
 
-    if (response.data?.choices?.[0]?.message?.content) {
-      let assistantReply = response.data.choices[0].message.content;
+  //   if (response.data?.choices?.[0]?.message?.content) {
+  //     let assistantReply = response.data.choices[0].message.content;
  
-      response.openai = assistantReply;
-      response.db = await chat.updateChat(chatId, prompt, response, userId);
+  //     response.openai = assistantReply;
+      // response.db = await chat.updateChat(chatId, prompt, response, userId);
 
-      conversation.push({ "role": "assistant", "content": assistantReply });
+  //     conversation.push({ "role": "assistant", "content": assistantReply });
 
-      await chat.saveConversation(chatId, conversation); // Save updated conversation to the database
-    }
+  //     await chat.saveConversation(chatId, conversation); // Save updated conversation to the database
+  //   }
   } catch (err) {
-    sendingError = "Error in put chat" + err;
+    // sendingError = "Error in put chat" + err;
 
-    sendErrorEmail(err);
+    // sendErrorEmail(err);
 
     console.log("err :" + err);
     res.status(500).json({
