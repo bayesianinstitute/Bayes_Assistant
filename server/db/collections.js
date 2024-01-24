@@ -5,4 +5,6 @@ export default {
     CONVERSATION: "conversation",
     SETTING : "setting",
     THREAD : "thread",
+    MESSAGE : "message",
+    
 }

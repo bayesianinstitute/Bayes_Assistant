@@ -22,14 +22,6 @@ const assistantFunctions = {
             throw error;
         }
     },
-    createThread: async () => {
-        try {
-            return await openai.beta.threads.create();
-        } catch (error) {
-            console.log(error.name, error.message);
-            throw error;
-        }
-    },
     saveThreadAndUser: (userId, threadId) => {
         return new Promise(async (resolve, reject) => {
           try {
@@ -48,62 +40,120 @@ const assistantFunctions = {
           }
         });
       },
-    
 
-    getThread: async ({ threadId }) => {
-        try {
-            return await openai.beta.threads.retrieve(threadId);
-        } catch (error) {
-            console.log(error.name, error.message);
-            return {
+
+      getThread: ({ threadId }) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            // Fetch the thread from the database based on the provided threadId
+            const thread = await db.collection(collections.THREAD).findOne({ threadId });
+      
+            if (!thread) {
+              resolve({
                 error: true,
-                message: error.message,
-            };
-        }
-    },
+                message: 'Thread not found in the database',
+              });
+            } else {
+              // Return the fetched thread details
+              resolve({
+                thread,
+              });
+            }
+          } catch (error) {
+            console.error('Error fetching thread:', error);
+            reject({
+              error: true,
+              message: error.message,
+            });
+          }
+        });
+      },
 
-    deleteThread: async ({ threadId }) => {
-        try {
-            return await openai.beta.threads.del(threadId);
-        } catch (error) {
-            console.log(error.name, error.message);
-            return {
-                error: true,
-                message: error.message,
-            };
-        }
-    },
-
-    addMessage: async ({ threadId, message, messageId, userId, name }) => {
-        try {
-            let metadata = {};
-            metadata['id'] = messageId;
-            metadata['name'] = name;
-            metadata['user_id'] = userId;
-
-            return await openai.beta.threads.messages.create(
-                threadId,
-                {
-                    role: 'user',
-                    content: message,
-                    metadata,
-                }
+    deleteThread: ({ threadId }) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            // Check if the thread exists in the database
+            const existingThread = await db.collection(collections.THREAD).findOne({ threadId });
+      
+            if (!existingThread) {
+              resolve({
+                message: 'Thread not found in the database',
+              });
+              return;
+            }
+      
+            // If the thread exists in the database, delete it
+            const databaseResponse = await db.collection(collections.THREAD).deleteOne({ threadId });
+      
+            console.log('Database response:', databaseResponse);
+      
+            resolve({
+              database: databaseResponse,
+            });
+          } catch (error) {
+            console.error('Error deleting thread:', error);
+            reject({
+              error: true,
+              message: error.message,
+            });
+          }
+        });
+      },
+      
+      addMessage: ({ threadId, message }) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            // Add the message to the thread using OpenAI
+            const response = await openai.beta.threads.messages.create(
+              threadId,
+              {
+                role: 'user',
+                content: message,
+              }
             );
-        } catch (error) {
-            console.log(error.name, error.message);
-            throw error;
-        }
-    },
-
-    getMessages: async ({ threadId }) => {
-        try {
-            const messages = await openai.beta.threads.messages.list(threadId);
-            return messages.data;
-        } catch (error) {
-            console.log(error.name, error.message);
-            throw error;
-        }
-    },
+      
+            // Extract user information from the OpenAI response
+  
+            await new Promise((resolve, reject) => {
+              db.collection(collections.MESSAGE)
+                .insertOne({
+                  userId: "afaan",
+                  threadId,
+                  response,
+                  createdAt: new Date(),
+                })
+                .then((result) => {
+                  console.log(result);
+                  resolve(result);
+                })
+                .catch((error) => {
+                  console.error('Error saving message response:', error);
+                  reject(error);
+                });
+            });
+      
+            resolve(response);
+          } catch (error) {
+            console.error('Error adding message:', error);
+            reject(error);
+          }
+        });
+      },
+      
+      getMessages: async ({ threadId }) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            // Assuming you have a collection named MESSAGE in your database
+            const messages = await db.collection(collections.MESSAGE).find({ threadId }).toArray();
+      
+            resolve(messages);
+          } catch (error) {
+            console.error('Error fetching messages from the database:', error);
+            reject(error);
+          }
+        });
+      },
+      
 
     startRun: async ({ threadId, instructions }) => {
         try {

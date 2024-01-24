@@ -178,7 +178,7 @@ router.post("/deleteThread", async (req, res) => {
     console.error("Error in deleteThread route:", error);
     res.status(500).json({
       status: 500,
-      message: 'Internal Server Error',
+      message: error.message,
     });
   }
 });
@@ -187,22 +187,19 @@ router.post("/deleteThread", async (req, res) => {
 
 router.post("/addMessage", async (req, res) => {
   try {
-    const { threadId, message, messageId, userId, name } = req.body;
+    const { threadId, message} = req.body;
 
     // Check if all required parameters are provided
-    if (!threadId || !message || !messageId || !userId || !name) {
+    if (!threadId || !message) {
       return res.status(400).json({
         status: 400,
-        message: 'All parameters (threadId, message, messageId, userId, name) are required in the request body',
+        message: 'All parameters (threadId, message) are required in the request body',
       });
     }
 
     const response = await assistantFunctions.addMessage({
       threadId,
-      message,
-      messageId,
-      userId,
-      name,
+      message
     });
 
     res.status(200).json({
