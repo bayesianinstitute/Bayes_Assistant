@@ -1,5 +1,8 @@
 import OpenAI from "openai";
 import dotnet from 'dotenv';
+import { db } from "../db/connection.js";
+import collections from "../db/collections.js";
+import { ObjectId } from "mongodb";
 
 dotnet.config();
 
@@ -27,6 +30,25 @@ const assistantFunctions = {
             throw error;
         }
     },
+    saveThreadAndUser: (userId, threadId) => {
+        return new Promise(async (resolve, reject) => {
+          try {
+            const result = await db.collection(collections.THREAD).insertOne
+            ({
+              userId,
+              threadId,
+              createdAt: new Date(),
+            });
+    
+            console.log(result);
+    
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+    
 
     getThread: async ({ threadId }) => {
         try {

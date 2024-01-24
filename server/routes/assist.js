@@ -5,8 +5,15 @@ import jwt from "jsonwebtoken";
 import chat from "../helpers/chat.js";
 import { ObjectId } from "mongodb";
 import assistantFunctions from "../helpers/assist.js";
+import OpenAI from "openai";
 
 dotnet.config();
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    maxRetries: 3,
+    timeout: 60 * 1000,
+});
 
 let router = Router();
 
@@ -81,28 +88,29 @@ router.get("/getAssistant", async (req, res) => {
 
 
 router.post("/createThread", async (req, res) => {
-  try {
-    const response = await assistantFunctions.createThread();
-    
+    const response = await openai.beta.threads.create();
     // Check if response is valid or handle accordingly
+    const userId = "afaan";
     if (!response) {
       res.status(500).json({
         status: 500,
         message: 'Failed to create thread',
       });
     } else {
+      // Extract threadId from the response
+      const threadId = response.id;
+
+      // Save threadId and user information to the database
+      await assistantFunctions.saveThreadAndUser(userId, threadId);
+
       res.status(200).json({
         status: 200,
-        data: response,
+        data: {
+          threadId,
+        },
       });
     }
-  } catch (error) {
-    console.error("Error in createThread route:", error);
-    res.status(500).json({
-      status: 500,
-      message: 'Internal Server Error',
-    });
-  }
+
 });
 
 router.post("/getThread", async (req, res) => {

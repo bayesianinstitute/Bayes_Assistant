@@ -4,4 +4,5 @@ export default {
     TEMP: 'temp',
     CONVERSATION: "conversation",
     SETTING : "setting",
+    THREAD : "thread",
 }

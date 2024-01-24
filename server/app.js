@@ -29,17 +29,14 @@ app.use('/api/assist/', AssistRoute)
 app.get('/*',(req,res)=>{
     res.sendFile(path.join(`${path.resolve(path.dirname(''))}/dist/index.html`))
 })
-app.listen(port, () => {
-    console.log("server started")
+
+connectDB((err) => {
+    if (err) return console.log("MongoDB Connect Failed : ", err)
+
+    console.log("MongoDB Connected")
+
+    app.listen(port, () => {
+        console.log("server started")
+    })
 })
-
-// connectDB((err) => {
-//     if (err) return console.log("MongoDB Connect Failed : ", err)
-
-//     console.log("MongoDB Connected")
-
-//     app.listen(port, () => {
-//         console.log("server started")
-//     })
-// })
 
