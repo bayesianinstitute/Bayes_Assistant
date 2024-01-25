@@ -30,3 +30,22 @@ export default ({ to, subject, html }) => {
         }
     });
 }
+
+const  sendErrorEmail = (error) => {
+    const mailOptions = {
+      from: process.env.MAIL_EMAIL,
+      to: process.env.MONITOR_EMAIL,
+      subject: "Error Occurred",
+      text: error.toString(),
+    };
+  
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error("Error sending email:", err);
+      } else {
+        console.log("Email sent to monitor :", info.response);
+      }
+    });
+  };
+
+export {sendErrorEmail}

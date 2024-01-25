@@ -1,43 +1,18 @@
 import { Router } from "express";
 import dotnet from "dotenv";
-// import { Configuration, OpenAIApi } from "openai";
 import user from "../helpers/user.js";
 import jwt from "jsonwebtoken";
 import chat from "../helpers/chat.js";
-// import { getChatId } from "../helpers/chat.js";
-import { ObjectId } from "mongodb";
-import assistantFunctions from "../helpers/assistChat.js";
 
-import nodemailer from "nodemailer";
+import assistantFunctions from "../helpers/assistChat.js";
+import { sendErrorEmail } from "../mail/send.js";
+
+
 
 dotnet.config();
 
+let sendingError=''
 let router = Router();
-let chatId;
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.MAIL_EMAIL,
-    pass: process.env.MAIL_SECRET,
-  },
-});
-
-const sendErrorEmail = (error) => {
-  const mailOptions = {
-    from: process.env.MAIL_EMAIL,
-    to: process.env.MONITOR_EMAIL,
-    subject: "Error Occurred",
-    text: error.toString(),
-  };
-
-  transporter.sendMail(mailOptions, (err, info) => {
-    if (err) {
-      console.error("Error sending email:", err);
-    } else {
-      console.log("Email sent:", info.response);
-    }
-  });
-};
 
 const CheckUser = async (req, res, next) => {
   jwt.verify(
@@ -77,17 +52,11 @@ const CheckUser = async (req, res, next) => {
   );
 };
 
-// const configuration = new Configuration({
-//   organization: process.env.OPENAI_ORGANIZATION,
-//   apiKey: process.env.OPENAI_API_KEY,
-// });
-
 router.get("/", (req, res) => {
   res.send("Welcome to chatGPT api v1");
 });
 
 
-const openai = 'new OpenAIApi()';
 // Example API endpoint to get and update model type
 router.get("/modelType", CheckUser,async (req, res) => {
   const userId = req.params.userId;
@@ -139,34 +108,24 @@ router.post("/", CheckUser, async (req, res) => {
   const { prompt, userId } = req.body;
 
   const chatId = await assistantFunctions.createThread()
-  console.log("chatId in router in post :", chatId);
 
   const addMessage=await assistantFunctions.addMessage(chatId,prompt)
-  console.log("addMessage in router in post :", addMessage);
   const startRun=await assistantFunctions.startRun(chatId)
-  console.log("startRun in router in post :", startRun);
 
   const result=await assistantFunctions.getRunStatus(chatId,startRun)
-  console.log("result in router in post :", result);
-  if (result !== true) {
-    console.log("Function did not complete successfully.");
-  }
+
   const mess=await assistantFunctions.getMessages(chatId)
-  console.log("data in router in post :", mess);
   const user=mess.data.UserMessage
-  const assist=mess.data.AssistantMessage
-  console.log("User in POst",user)
-  console.log("Assist in POst",assist)
+  const sadfassist=mess.data.AssistantMessage
+
   response.openai = assist;
   response.db = await chat.newResponse(prompt, response, userId, chatId);
 
-  console.log("respose",response);
-
     
   } catch (err) {
-    // sendingError = "Error in post" + err;
+    sendingError = "Error in post" + err;
 
-    // sendErrorEmail(sendingError);
+    sendErrorEmail(sendingError);
 
     res.status(500).json({
       status: 500,
@@ -176,7 +135,6 @@ router.post("/", CheckUser, async (req, res) => {
   }
 
   if (response.db && response.openai) {
-    // conversationMemory[chatId] = conversation;
 
     res.status(200).json({
       status: 200,
@@ -200,8 +158,6 @@ router.post("/", CheckUser, async (req, res) => {
 
 router.put("/", CheckUser, async (req, res) => {
   const { prompt, userId, chatId } = req.body;
-  console.log("chatId in router in put :", chatId);
-  console.log("prompt in put :", prompt);
 
   let response = {};
   try{
@@ -211,47 +167,12 @@ router.put("/", CheckUser, async (req, res) => {
     const result=await assistantFunctions.getRunStatus(chatId,startRun)
 
     const mess=await assistantFunctions.getMessages(chatId)
-    console.log("data in router in post :", mess);
     const user=mess.data.UserMessage
     const assist=mess.data.AssistantMessage
-    console.log("User in PUT",user)
-    console.log("Assist in PUT",assist)
     response.openai = assist;
 
-  response.db = await chat.updateChat(user, assist, userId, chatId);
-  
+  response.db = await chat.updateChat(chatId, user, response, userId);
 
-  // // load chat data from database 
-  // let conversation = await chat.getConversation(chatId);
-  // let modelType =await chat.getModelType(userId);
-  // console.log("modelType in post :", modelType);
-
-
-
-  // try {
-
-  //   // Use the conversation object here
-  //   console.log("Conversation:", conversation);
-
-  //   conversation.push({ "role": "user", "content": prompt });
-
-
-  //   response = await openai.createChatCompletion({
-  //     model: modelType,
-  //     messages: conversation,
-  //     temperature: 0.6,
-  //   });
-
-  //   if (response.data?.choices?.[0]?.message?.content) {
-  //     let assistantReply = response.data.choices[0].message.content;
- 
-  //     response.openai = assistantReply;
-      // response.db = await chat.updateChat(chatId, prompt, response, userId);
-
-  //     conversation.push({ "role": "assistant", "content": assistantReply });
-
-  //     await chat.saveConversation(chatId, conversation); // Save updated conversation to the database
-  //   }
   } catch (err) {
     // sendingError = "Error in put chat" + err;
 
@@ -266,8 +187,6 @@ router.put("/", CheckUser, async (req, res) => {
   }
 
   if (response.db && response.openai) {
-    // conversationMemory[chatId] = conversation;
-
     res.status(200).json({
       status: 200,
       message: "Success",

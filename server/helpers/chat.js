@@ -1,15 +1,10 @@
 import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
-import { ObjectId } from "mongodb";
 
-let chatId; // Declare the chatId variable outside the exported object
 
 const chatHelper = {
   newResponse: (prompt,  {openai} , userId,chatId) => {
     return new Promise(async (resolve, reject) => {
-      // chatId = new ObjectId().toHexString();
-      console.log("helper chatId", chatId);
-      console.log("helper userId", userId);
 
       let res = null;
       try {

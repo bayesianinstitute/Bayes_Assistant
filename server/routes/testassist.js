@@ -2,9 +2,7 @@ import { Router } from "express";
 import dotnet from "dotenv";
 import user from "../helpers/user.js";
 import jwt from "jsonwebtoken";
-import chat from "../helpers/chat.js";
-import { ObjectId } from "mongodb";
-import assistantFunctions from "../helpers/assist.js";
+import assistantFunctions from "../helpers/testassist.js";
 import OpenAI from "openai";
 
 dotnet.config();

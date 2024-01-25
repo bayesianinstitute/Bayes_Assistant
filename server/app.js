@@ -5,7 +5,7 @@ import dotnet from 'dotenv'
 import { connectDB } from './db/connection.js'
 import ChatRoute from './routes/chat.js'
 import UserRoute from './routes/user.js'
-import AssistRoute from './routes/assist.js'
+import AssistRoute from './routes/testassist.js'
 import path from 'path'
 
 dotnet.config()
