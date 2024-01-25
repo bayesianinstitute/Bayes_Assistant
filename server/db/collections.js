@@ -5,6 +5,8 @@ export default {
     SETTING : "setting",
     THREAD : "thread",
     MESSAGE : "message",
-    Run: "run"
+    Run: "run",
+    INVITATION: "invitation",
+    INVITATIONUSAGE: "invitationusage",
     
 }

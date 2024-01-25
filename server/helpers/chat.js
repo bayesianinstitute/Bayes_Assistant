@@ -1,7 +1,6 @@
 import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
 
-
 const chatHelper = {
   newResponse: (prompt,  {openai} , userId,chatId) => {
     return new Promise(async (resolve, reject) => {
@@ -273,7 +272,116 @@ const chatHelper = {
         });
     });
   },
+  generateAndInsertInvitationCodes: (n, partner_name) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const existingCodes = await db.collection(collections.INVITATION).distinct('codes');
   
+        const codes = Array.from({ length: n }, () => {
+          let code;
+          do {
+            code = Math.floor(Math.random() * 900000) + 100000;
+          } while (existingCodes.includes(code.toString()));
+  
+          return code.toString();
+        });
+  
+        const invitationDocument = {
+          partner_name: partner_name,
+          codes: codes,
+        };
+  
+        await db.collection(collections.INVITATION).insertOne(invitationDocument);
+  
+        resolve({ message: `${n} unique Invitation codes generated and inserted successfully.` });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  },
+  
+  
+  
+  fetchInvitationCodesByPartnerName: (partner_name) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const codes = await db.collection(collections.INVITATION)
+          .find({ partner_name: partner_name })
+          .toArray();
+  
+        resolve(codes);
+      } catch (error) {
+        console.error('Error fetching invitation codes by partner name:', error);
+        reject('Error fetching invitation codes by partner name.');
+      }
+    });
+  },
+  checkCodeAvailability: (code) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const result = await db.collection(collections.INVITATION)
+          .findOne({ codes: code });
+  
+        if (result) {
+          const partner_name = result.partner_name || null;
+          resolve({
+            available: true,
+            partner_name: partner_name
+          });
+        } else {
+          resolve({
+            available: false,
+            partner_name: null
+          });
+        }
+      } catch (error) {
+        console.error('Error checking code availability:', error);
+        reject('Error checking code availability.');
+      }
+    });
+  },
+  deleteCode: (userId, code) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        const now = new Date();
+        const invitationDocument = await db.collection(collections.INVITATION)
+          .findOne({ codes: code });
+  
+        if (!invitationDocument) {
+          resolve({ message: `Code ${code} not found.` });
+          return;
+        }
+  
+        const result = await db.collection(collections.INVITATION)
+          .updateOne(
+            { codes: code },
+            { $pull: { codes: code } }
+          );
+  
+        if (result.modifiedCount > 0) {
+          const invitationUsageDocument = {
+            userId: userId,
+            code: code,
+            createdDate: now.toISOString(),
+          };
+  
+          await db.collection(collections.INVITATIONUSAGE).insertOne(invitationUsageDocument);
+  
+
+          setTimeout(async () => {
+            await db.collection(collections.INVITATIONUSAGE).deleteOne({ code: code });
+          }, 60000); // 1 minute in milliseconds
+  
+          resolve({ message: `Code ${code} deleted successfully and assigned to INVITATIONUSAGE.` });
+        } else {
+          resolve({ message: `Code ${code} not found.` });
+        }
+      } catch (error) {
+        console.error('Error deleting code:', error);
+        reject('Error deleting code.');
+      }
+    });
+  },
 
 };
 
