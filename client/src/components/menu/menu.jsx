@@ -232,25 +232,25 @@ const Modal = ({ changeColorMode, settingRef }) => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo'); // Default model type
+  // const [selectedModel, setSelectedModel] = useState('gpt-3.5-turbo'); // Default model type
 
-  const handleModelChange = (event) => {
-    setSelectedModel(event.target.value);
-    setModelTypeAPI(selectedModel);
-  };
+  // const handleModelChange = (event) => {
+  //   setSelectedModel(event.target.value);
+  //   setModelTypeAPI(selectedModel);
+  // };
 
-  const setModelTypeAPI = async (newModelType) => {
-    // Make an API call to set the new model type using Axios
-    try {
-      const response = await axios.put('/api/chat/modelType', {
-        modelType: newModelType,
-      });
+  // const setModelTypeAPI = async (newModelType) => {
+  //   // Make an API call to set the new model type using Axios
+  //   try {
+  //     const response = await axios.put('/api/chat/modelType', {
+  //       modelType: newModelType,
+  //     });
 
-      console.log('Model type set successfully:', response.data);
-    } catch (error) {
-      console.error('Error while setting model type:', error.message);
-    }
-  }
+  //     console.log('Model type set successfully:', response.data);
+  //   } catch (error) {
+  //     console.error('Error while setting model type:', error.message);
+  //   }
+  // }
 
   const deleteAccount = async () => {
     if (window.confirm("Do you want delete your account")) {
@@ -305,13 +305,15 @@ const Modal = ({ changeColorMode, settingRef }) => {
             <div></div>
           </button>
 
-          {/* Dropdown menu for selecting the model */}
+          {/* Dropdown menu for selecting the model 
 
           <p>Select Model:</p>
           <select value={selectedModel} onChange={handleModelChange}>
             <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
             <option value="gpt-3.5-turbo">GPT-4-Preview</option>
           </select>
+          */}
+
         </div>
         <div className="bottum">
           {/* <button>Export data</button> */}
