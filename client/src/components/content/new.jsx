@@ -7,7 +7,7 @@ const New = memo(() => {
   return (
     <div className='New'>
       <div>
-        <h1 className='title currentColor'>Bayes E-commerce Chat</h1>
+        <h1 className='title currentColor'>Bayes Data Science Assistant Chat</h1>
       </div>
     </div>
   )

@@ -84,12 +84,12 @@ router.post('/signup', CheckLogged, async (req, res) => {
 
                         html = html.replace('[URL]', `${process.env.SITE_URL}:${process.env.SITE_PORT}/signup/pending/${response._id}`)
                         html = html.replace('[TITLE]', 'Verify your email address')
-                        html = html.replace('[CONTENT]', 'To continue setting up your Bayes E-commerce Chat  account, please verify that this is your email address.')
+                        html = html.replace('[CONTENT]', 'To continue setting up your Bayes Data Science Assistant Chat  account, please verify that this is your email address.')
                         html = html.replace('[BTN_NAME]', 'Verify email address')
 
                         sendMail({
                             to: req.body.email,
-                            subject: `Bayes E-commerce Chat  - Verify your email`,
+                            subject: `Bayes Data Science Assistant Chat  - Verify your email`,
                             html
                         })
 
@@ -346,7 +346,7 @@ router.post('/forgot-request', CheckLogged, async (req, res) => {
 
                         sendMail({
                             to: req.body.email,
-                            subject: `Change password for Bayes E-commerce Chat  Account`,
+                            subject: `Change password for Bayes Data Science Assistant Chat  Account`,
                             html
                         })
 

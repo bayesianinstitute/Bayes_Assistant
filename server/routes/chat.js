@@ -116,7 +116,7 @@ router.post("/", CheckUser, async (req, res) => {
 
   const mess=await assistantFunctions.getMessages(chatId)
   const user=mess.data.UserMessage
-  const sadfassist=mess.data.AssistantMessage
+  const assist=mess.data.AssistantMessage
 
   response.openai = assist;
   response.db = await chat.newResponse(prompt, response, userId, chatId);
