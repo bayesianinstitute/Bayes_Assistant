@@ -16,9 +16,9 @@ const transporter = nodemailer.createTransport({
 
 export default ({ to, subject, html }) => {
     var options = {
-        from: `Bayes Data Science Assistant Chat  <${process.env.MAIL_EMAIL}>`,
+        from: `Bayes Lawyer Assistant Chat  <${process.env.MAIL_EMAIL}>`,
         to,
-        subject:"Bayes Data Science Assistant Chat  :- Verify your email",
+        subject:"Bayes Lawyer Assistant Chat  :- Verify your email",
         html
     }
 

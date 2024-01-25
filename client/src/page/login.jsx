@@ -49,7 +49,7 @@ const Login = () => {
             </div>
 
             <div>
-              <p>Welcome to Bayes Data Science Assistant Chat</p>
+              <p>Welcome to Bayes Lawyer Assistant Chat</p>
               <p>Log in with your  account to continue</p>
             </div>
 
