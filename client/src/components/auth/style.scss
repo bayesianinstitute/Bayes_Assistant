@@ -45,7 +45,7 @@
         }
 
         .active-label-green {
-            color: #9a031e;
+            color: #F27F0C;
         }
 
         .active-label {
@@ -76,7 +76,7 @@
         }
 
         .active-input-green {
-            border-color: #9a031e;
+            border-color: #F27F0C;
         }
 
         .active-input {
@@ -135,7 +135,7 @@
                         width: calc(18rem + 33px);
                         margin-top: 1.5rem;
                         color: #FFFFFF;
-                        background: #fb8b24;
+                        background: #F7AD19;
                         transition: all .1s ease-in-out;
                         -moz-transition: all .1s ease-in-out;
                         border-radius: 3px;
@@ -149,7 +149,7 @@
 
                         &:hover {
                             cursor: pointer;
-                            background: #9a031e;
+                            background: #F27F0C;
                         }
                     }
 
@@ -241,7 +241,7 @@
             }
 
             a {
-                color: #fb8b24;
+                color: #F7AD19;
                 padding: 5px 5px;
                 border-radius: 3px;
                 transition: all .2s ease-in-out;
@@ -285,7 +285,7 @@
                     right: 10px;
                     font-size: 16px;
                     top: 15%;
-                    color: #fb8b24;
+                    color: #F7AD19;
                     padding: 5px 5px;
                     border-radius: 3px;
                     border: none;
@@ -359,13 +359,13 @@
                 #passAlertDone {
                     padding-left: .5rem;
                     position: relative;
-                    color: #fb8b24 !important;
+                    color: #F7AD19 !important;
 
                     svg {
                         position: absolute;
                         left: 0;
                         top: 6px;
-                        color: #fb8b24;
+                        color: #F7AD19;
                     }
                 }
 
@@ -378,7 +378,7 @@
                 margin-top: 1rem;
 
                 a {
-                    color: #fb8b24;
+                    color: #F7AD19;
                     padding: 5px 5px;
                     border-radius: 3px;
                     font-size: 12px;
@@ -398,7 +398,7 @@
                 width: calc(18rem + 33px);
                 margin-top: 1.5rem;
                 color: #FFFFFF;
-                background: #fb8b24;
+                background: #F7AD19;
                 transition: all .1s ease-in-out;
                 -moz-transition: all .1s ease-in-out;
                 border-radius: 3px;
@@ -412,7 +412,7 @@
 
                 &:hover {
                     cursor: pointer;
-                    background: #9a031e;
+                    background: #F27F0C;
                 }
             }
 
@@ -465,7 +465,7 @@
                 margin-top: 1rem;
                 margin-bottom: 7rem;
                 cursor: pointer;
-                color: #fb8b24;
+                color: #F7AD19;
             }
 
         }
@@ -482,7 +482,7 @@
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
-                border: 3px solid #fb8b24;
+                border: 3px solid #F7AD19;
                 width: 5rem;
                 height: 5rem;
                 border-radius: 50%;
@@ -490,7 +490,7 @@
                 svg {
                     width: 3rem;
                     height: 3rem;
-                    fill: #fb8b24 !important;
+                    fill: #F7AD19 !important;
                 }
             }
 
@@ -555,7 +555,7 @@
 
                     &:focus {
                         outline-style: auto;
-                        outline-color: #9a031e;
+                        outline-color: #F27F0C;
                         outline-width: 2px;
                     }
                 }
@@ -567,7 +567,7 @@
                 width: 100%;
                 margin-top: 1.5rem;
                 color: #FFFFFF;
-                background: #fb8b24;
+                background: #F7AD19;
                 transition: all .1s ease-in-out;
                 -moz-transition: all .1s ease-in-out;
                 border-radius: 3px;
@@ -581,7 +581,7 @@
 
                 &:hover {
                     cursor: pointer;
-                    background: #9a031e;
+                    background: #F27F0C;
                 }
             }
 
@@ -594,7 +594,7 @@
                 color: #6f7780;
 
                 span {
-                    color: #fb8b24;
+                    color: #F7AD19;
                 }
             }
         }
