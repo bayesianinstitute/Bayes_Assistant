@@ -454,12 +454,15 @@ export default {
 
         const currentDate = new Date();
         const expireCodeTime = user.expireAt;
+        console.log(expireCodeTime);
+
 
         // Check if expiration date has passed
         if (expireCodeTime && currentDate > expireCodeTime) {
           let mess=`Invitation code has expired . please subscribe new code to continue`
-          sendErrorEmail(mess)
-          reject({ expired: true, text: "Invitation code has expired" });
+          console.log(mess)
+          // sendErrorEmail(mess)
+          reject({ status: 410,expired: true, text: "Invitation code has expired" });
           return;
         }
 

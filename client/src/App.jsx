@@ -5,6 +5,7 @@ import { Error, Forgot, Login, Main, Signup } from "./page";
 import { useSelector } from "react-redux";
 import ProtectedRoute from "./protected";
 import Loading from "./components/loading/loading";
+import UpdateInvitationCode from "./page/updateCode";
 
 const App = () => {
   const [offline, setOffline] = useState(!window.navigator.onLine);
@@ -67,6 +68,7 @@ const App = () => {
           <Route exact path="/" element={<Main />} />
           <Route path="/chat" element={<Main />} />
           <Route path="/chat/:id" element={<Main />} />
+          <Route path="/update_invitation_code" element={<UpdateInvitationCode />} /> {/* Add route for UpdateInvitationCode */}
         </Route>
 
         <Route element={<ProtectedRoute offline={offline} />}>
