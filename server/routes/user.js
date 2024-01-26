@@ -66,6 +66,7 @@ router.post('/signup', CheckLogged, async (req, res) => {
 
         try {
             response = await user.signup(req.body)
+            console.log(response)
         } catch (err) {
             if (err?.exists) {
                 res.status(400).json({

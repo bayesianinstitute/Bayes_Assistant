@@ -14,15 +14,17 @@ export default {
         let check = await db.collection(collections.USER).findOne({
           email: email,
         });
-        const invitationDocument = await db.collection(collections.INVITATION).findOne({
-             codes: inviteCode
-        });
+        const invitationDocument = await db
+          .collection(collections.INVITATION)
+          .findOne({
+            codes: inviteCode,
+          });
 
-      if (!invitationDocument) {
-        console.log(`Code ${inviteCode} not found.`)
-        resolve({ message: `Code ${inviteCode} not found.` });
-        return;
-      }
+        if (!invitationDocument) {
+          console.log(`Code ${inviteCode} not found.`);
+          reject({ message: `Code ${inviteCode} not found.` });
+          return;
+        }
         if (!check) {
           pass = await bcrypt.hash(pass, 10);
 
@@ -157,22 +159,28 @@ export default {
         });
 
       if (data) {
+        console.log("data: ", data);
         let { pass, email, inviteCode } = data;
         email = email.replace("_register", "");
 
         let res = null;
         try {
+          // Calculate expiration date (30 days from now)
+          const expirationDate = new Date();
+          expirationDate.setDate(expirationDate.getDate() + 30);
+          console.log("expirationDate: ", expirationDate);
           const invitationDocument = await db
             .collection(collections.INVITATION)
             .findOne({ codes: inviteCode });
-
+          console.log("inviation : ",invitationDocument)
           if (!invitationDocument) {
-            resolve({ message: `Code ${inviteCode} not found.` });
+            reject({ message: `Code ${inviteCode} not found.` });
             return;
           }
           await db
             .collection(collections.USER)
             .createIndex({ email: 1 }, { unique: true });
+          console.log("befor ",res)
           res = await db.collection(collections.USER).insertOne({
             _id: new ObjectId(_id),
             email: email,
@@ -180,8 +188,11 @@ export default {
             lName: lName,
             pass: pass,
             inviteCode: inviteCode,
-            usageCodeTime: new Date(),
+            createAt: new Date(),
+            expireAt: expirationDate, 
           });
+
+          console.log("res :",res);
 
           const result = await db
             .collection(collections.INVITATION)
