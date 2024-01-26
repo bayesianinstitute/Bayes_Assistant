@@ -2,6 +2,7 @@ import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
 import bcrypt from "bcrypt";
 import { ObjectId } from "mongodb";
+import { sendErrorEmail } from "../mail/send.js";
 
 export default {
   signup: ({ email, pass, inviteCode, manual, pending }) => {
@@ -172,7 +173,7 @@ export default {
           const invitationDocument = await db
             .collection(collections.INVITATION)
             .findOne({ codes: inviteCode });
-          console.log("inviation : ",invitationDocument)
+          console.log("inviation : ", invitationDocument);
           if (!invitationDocument) {
             reject({ message: `Code ${inviteCode} not found.` });
             return;
@@ -180,7 +181,7 @@ export default {
           await db
             .collection(collections.USER)
             .createIndex({ email: 1 }, { unique: true });
-          console.log("befor ",res)
+          console.log("befor ", res);
           res = await db.collection(collections.USER).insertOne({
             _id: new ObjectId(_id),
             email: email,
@@ -189,10 +190,10 @@ export default {
             pass: pass,
             inviteCode: inviteCode,
             createAt: new Date(),
-            expireAt: expirationDate, 
+            expireAt: expirationDate,
           });
 
-          console.log("res :",res);
+          console.log("res :", res);
 
           const result = await db
             .collection(collections.INVITATION)
@@ -441,21 +442,35 @@ export default {
   },
   checkUserFound: ({ _id }) => {
     return new Promise(async (resolve, reject) => {
-      let user = await db
-        .collection(collections.USER)
-        .findOne({ _id: new ObjectId(_id) })
-        .catch((err) => {
-          console.log(err);
-          reject(err);
-        });
+      try {
+        let user = await db
+          .collection(collections.USER)
+          .findOne({ _id: new ObjectId(_id) });
 
-      if (user) {
+        if (!user) {
+          reject({ notExists: true, text: "Not found" });
+          return;
+        }
+
+        const currentDate = new Date();
+        const expireCodeTime = user.expireAt;
+
+        // Check if expiration date has passed
+        if (expireCodeTime && currentDate > expireCodeTime) {
+          let mess=`Invitation code has expired . please subscribe new code to continue`
+          sendErrorEmail(mess)
+          reject({ expired: true, text: "Invitation code has expired" });
+          return;
+        }
+
         resolve(user);
-      } else {
-        reject({ notExists: true, text: "Not found" });
+      } catch (err) {
+        console.log(err);
+        reject(err);
       }
     });
   },
+
   deleteUser: (userId) => {
     return new Promise((resolve, reject) => {
       db.collection(collections.USER)

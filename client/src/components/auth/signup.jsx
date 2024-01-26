@@ -8,7 +8,6 @@ import instance from "../../config/instance";
 import "./style.scss";
 
 
-const VALID_INVITATION_CODES = ["dsorcim","Bets-Jacob-2023"];
 const reducer = (state, { type, status }) => {
   switch (type) {
     case "filled":
@@ -33,6 +32,7 @@ const SignupComponent = () => {
   const [formData, setFormData] = useState({
     email: "",
     pass: "",
+    inviteCode:"",
     manual: false,
   });
 
@@ -46,15 +46,22 @@ const SignupComponent = () => {
   const formHandle = async (e) => {
     e?.preventDefault();
     if (formData?.pass.length >= 8) {
-      if (VALID_INVITATION_CODES.includes(formData.invitationCode)) {
+      if (formData.inviteCode.length >=1 ) {
         let res = null;
         try {
           res = await instance.post("/api/user/signup", formData);
         } catch (err) {
           console.log(err);
           if (err?.response?.data.message?.exists) {
+            
             stateAction({ type: "error", status: true });
-          } else {
+          } else if (err?.response?.data?.message) {
+            alert(err.response.data.message.message);
+            // stateAction({ type: "error", status: true });
+            return
+
+          }
+          else {
             stateAction({ type: "error", status: false });
           }
         } finally {
@@ -69,7 +76,7 @@ const SignupComponent = () => {
           }
         }
       } else {
-        alert("Incorrect invitation code. Please try again.");
+        alert("invitation code should 36 character. Please try again.");
       }
     }
   };
@@ -222,8 +229,8 @@ const SignupComponent = () => {
                 <br /> 
                 <div className="password">
                   <FormFeild
-                    value={formData.invitationCode}
-                    name="invitationCode"
+                    value={formData.inviteCode}
+                    name="inviteCode"
                     label="Invitation code"
                     type="text"
                     handleInput={handleInput}
