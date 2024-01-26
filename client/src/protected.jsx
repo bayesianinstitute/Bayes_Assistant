@@ -40,8 +40,8 @@ const ProtectedRoute = ({ offline, authed }) => {
           }
         } else if (err?.response?.data?.message?.status === 410){
 
-          console.log("Your invation code is experied")
-          alert("Your invation code is experied")
+          console.log("Your invation code is expired")
+          alert("Your invation code is expired")
           navigate("/update_invitation_code"); 
           
         }

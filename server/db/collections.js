@@ -3,10 +3,5 @@ export default {
     USER: 'user',
     TEMP: 'temp',
     SETTING : "setting",
-    THREAD : "thread",
-    MESSAGE : "message",
-    Run: "run",
-    INVITATION: "invitation",
-    INVITATIONUSAGE: "invitationusage",
-    
+    INVITATION: "invitation",    
 }
