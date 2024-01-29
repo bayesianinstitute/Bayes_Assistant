@@ -62,8 +62,11 @@ router.post('/signup', CheckLogged, async (req, res) => {
         let response = null
         req.body.pending = true
 
+        // console.log("Body signUp : ",req.body)
+
         try {
             response = await user.signup(req.body)
+            console.log(response)
         } catch (err) {
             if (err?.exists) {
                 res.status(400).json({

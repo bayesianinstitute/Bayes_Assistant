@@ -286,5 +286,67 @@ router.delete("/all", CheckUser, async (req, res) => {
     }
   }
 });
+router.post("/generateInvitationCodes", async (req, res) => {
+  const { n, partner_name } = req.body; // Assuming 'n' is the number of codes to generate
 
+  try {
+    if (!n || isNaN(n) || n <= 0 || !partner_name) {
+      return res.status(400).json({ error: 'Invalid or missing values for n or partner_name.' });
+    }
+
+    const result = await chat.generateAndInsertInvitationCodes(parseInt(n), partner_name);
+    console.log(result);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.post("/fetchInvitationCodesByPartnerName", async (req, res) => {
+  const { partner_name } = req.body;
+
+  try {
+    if (!partner_name) {
+      return res.status(400).json({ error: 'Invalid or missing partner_name.' });
+    }
+
+    const codes = await chat.fetchInvitationCodesByPartnerName(partner_name);
+    res.status(200).json({ codes });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+router.post("/checkCodeAvailability", async (req, res) => {
+  const { code } = req.body;
+
+  try {
+    if (!code) {
+      return res.status(400).json({ error: 'Invalid or missing code.' });
+    }
+
+    const result = await chat.checkCodeAvailability(code);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+router.post("/deleteCode", async (req, res) => {
+  const { code,userId } = req.body;
+
+  try {
+    if (!code) {
+      return res.status(400).json({ error: 'Invalid or missing code.' });
+    }
+
+    const result = await chat.deleteCode(userId,code);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 export default router;
