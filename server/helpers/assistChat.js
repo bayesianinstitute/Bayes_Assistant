@@ -10,9 +10,18 @@ const openai = new OpenAI({
 });
 
 const assistantFunctions = {
-  createThread: async () => {
+  createThread: async (file,prompt) => {
     try {
+      console.log("File in assistchat: " +file)
       const response = await openai.beta.threads.create();
+        // messages: [
+        //   {
+        //     "role": "user",
+        //     "content": prompt,      
+        //     "file_ids": [file]
+        //   }
+        // ]
+      // });
 
       if (response && response.id) {
         // Extract threadId from the response
@@ -26,15 +35,16 @@ const assistantFunctions = {
     }
   },
 
-  addMessage: async (threadId, message) => {
+  addMessage: async (threadId, message,file) => {
     try {
       // Add the message to the thread using OpenAI
       console.log(threadId, message);
       const response = await openai.beta.threads.messages.create(threadId, {
         role: "user",
         content: message,
+        file_ids: [file]
       });
-      console.log(response);
+      console.log("ADD MESSAGE",response);
       return response;
     } catch (error) {
       console.error("Error adding message:", error);

@@ -3,13 +3,21 @@ import dotnet from "dotenv";
 import user from "../helpers/user.js";
 import jwt from "jsonwebtoken";
 import chat from "../helpers/chat.js";
-
+import OpenAI from "openai";
 import assistantFunctions from "../helpers/assistChat.js";
 import { sendErrorEmail } from "../mail/send.js";
+import fs from "fs";
 
 
 
 dotnet.config();
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  maxRetries: 3,
+  timeout: 60 * 1000,
+});
+
 
 let sendingError=''
 let router = Router();
@@ -106,10 +114,18 @@ router.post("/", CheckUser, async (req, res) => {
 
   try{
   const { prompt, userId } = req.body;
+ 
+  //Upload a file with an "assistants" purpose
+  // const file = await openai.files.create({
+  //   file: fs.createReadStream("a.txt"),
+  //   purpose: "assistants",
+  // });
+  // console.log("File in chat: " ,file.id)
 
-  const chatId = await assistantFunctions.createThread()
 
-  const addMessage=await assistantFunctions.addMessage(chatId,prompt)
+  const chatId = await assistantFunctions.createThread('file-5N8avx0SU4vunfXKREb8C7N9',prompt)
+
+  const addMessage=await assistantFunctions.addMessage(chatId,prompt,'file-5N8avx0SU4vunfXKREb8C7N9')
   const startRun=await assistantFunctions.startRun(chatId)
 
   const result=await assistantFunctions.getRunStatus(chatId,startRun)
@@ -124,8 +140,8 @@ router.post("/", CheckUser, async (req, res) => {
     
   } catch (err) {
     sendingError = "Error in post" + err;
-
-    sendErrorEmail(sendingError);
+    console.log(err)
+    //sendErrorEmail(sendingError);
 
     res.status(500).json({
       status: 500,
