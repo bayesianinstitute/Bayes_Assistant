@@ -113,7 +113,7 @@ router.post("/", CheckUser, async (req, res) => {
   let response = {};
 
   try{
-  const { prompt, userId } = req.body;
+  const { prompt, userId,file } = req.body;
  
   //Upload a file with an "assistants" purpose
   // const file = await openai.files.create({
@@ -173,7 +173,7 @@ router.post("/", CheckUser, async (req, res) => {
 });
 
 router.put("/", CheckUser, async (req, res) => {
-  const { prompt, userId, chatId } = req.body;
+  const { prompt, userId, chatId ,file} = req.body;
 
   let response = {};
   try{
