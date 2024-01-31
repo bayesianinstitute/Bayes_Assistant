@@ -1,15 +1,27 @@
 import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
+import user from "./user.js";
 
+const uploadFile = async (file) => {
+  // Implement file upload logic (e.g., saving the file to the server or cloud storage)
+  // Return the file URL or any identifier
+  // ...
+
+  return file; // Example: "https://example.com/uploads/file.txt"
+};
 const chatHelper = {
-  newResponse: (prompt,  {openai} , userId,chatId) => {
+  newResponse: (prompt, { openai }, userId, chatId, file) => {
     return new Promise(async (resolve, reject) => {
-
       let res = null;
+
       try {
-        await db
-          .collection(collections.CHAT)
-          .createIndex({ user: 1 }, { unique: true });
+        await db.collection(collections.CHAT).createIndex({ user: 1 }, { unique: true });
+
+        // Check if a file is provided
+        
+        console.log("USerId in helper ",userId);
+        const fileUrl = file ? await uploadFile(file) : null;
+
         res = await db.collection(collections.CHAT).insertOne({
           user: userId.toString(),
           data: [
@@ -19,6 +31,7 @@ const chatHelper = {
                 {
                   prompt,
                   content: openai,
+                  // fileUrl: fileUrl, // Add fileUrl to the chats object
                 },
               ],
             },
@@ -40,6 +53,7 @@ const chatHelper = {
                       {
                         prompt,
                         content: openai,
+                        // fileUrl: fileUrl, // Add fileUrl to the chats object
                       },
                     ],
                   },
@@ -55,7 +69,6 @@ const chatHelper = {
       } finally {
         if (res) {
           res.chatId = chatId;
-          // console.log("res helpper",res.chatId)
           resolve(res);
         } else {
           reject({ text: "DB gets something wrong" });

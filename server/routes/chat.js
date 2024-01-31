@@ -7,8 +7,18 @@ import OpenAI from "openai";
 import assistantFunctions from "../helpers/assistChat.js";
 import { sendErrorEmail } from "../mail/send.js";
 import fs from "fs";
+import multer from 'multer';
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/'); // Specify the directory for storing uploaded files
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname); // Use a unique filename for each uploaded file
+  },
+});
 
+const upload = multer({ storage: storage });
 
 dotnet.config();
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -47,6 +57,7 @@ const CheckUser = async (req, res, next) => {
         } finally {
           if (userData) {
             req.body.userId = userData._id;
+            console.log("Checkuser",req.body.userId);
             next();
           }
         }
@@ -59,6 +70,7 @@ const CheckUser = async (req, res, next) => {
     }
   );
 };
+
 
 router.get("/", (req, res) => {
   res.send("Welcome to chatGPT api v1");
@@ -109,11 +121,12 @@ router.put("/modelType",CheckUser, async (req, res) => {
 
 
 
-router.post("/", CheckUser, async (req, res) => {
+router.post("/", upload.single("file"), CheckUser, async (req, res) => {
   let response = {};
 
   try{
-  const { prompt, userId,file } = req.body;
+  const { prompt, userId } = req.body;
+  const file = req.file;
  
   //Upload a file with an "assistants" purpose
   // const file = await openai.files.create({
@@ -135,7 +148,10 @@ router.post("/", CheckUser, async (req, res) => {
   const assist=mess.data.AssistantMessage
 
   response.openai = assist;
-  response.db = await chat.newResponse(prompt, response, userId, chatId);
+  console.log("Routes UserId",userId);
+  console.log("Routes prompt",prompt);
+  console.log("Routes chatId",chatId);
+  response.db = await chat.newResponse(prompt, response, userId, chatId, file);
 
     
   } catch (err) {
@@ -172,7 +188,7 @@ router.post("/", CheckUser, async (req, res) => {
   }
 });
 
-router.put("/", CheckUser, async (req, res) => {
+router.put("/", upload.single("file"), CheckUser, async (req, res) => {
   const { prompt, userId, chatId ,file} = req.body;
 
   let response = {};

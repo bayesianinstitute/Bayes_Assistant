@@ -111,15 +111,15 @@ const Main = () => {
 const InputArea = ({ status, chatRef, stateAction }) => {
   
   let textAreaRef = useRef();
-  const fileInputRef = useRef();
 
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
 
+  const [file, setFile] = useState(null);
+
   const { prompt, content, _id } = useSelector((state) => state.messages);
 
-  const [file, setFile] = useState(null);
   const [textSubmitted,setTextSubmitted]=useState(false);
 
   const handleFileChange = (e) => {
@@ -130,44 +130,45 @@ const InputArea = ({ status, chatRef, stateAction }) => {
   const FormHandle = async () => {
     if (prompt?.length > 0) {
       stateAction({ type: "chat", status: true });
-  
+
       let chatsId = Date.now();
-  
+
       dispatch(insertNew({ id: chatsId, content: "", prompt }));
       chatRef?.current?.clearResponse();
-  
+
       dispatch(livePrompt("")); // Clear the prompt by updating the state
-  
+
       // Reset textSubmitted state to false after submitting
       setTextSubmitted(true);
-  
+
       // Reset the textarea's height to default value after submitting
       if (textAreaRef.current) {
         textAreaRef.current.style.height = "auto";
         textAreaRef.current.style.height = "31px"; // Default height after submitting
+
+
       }
-  
+
       let res = null;
-  
+
       try {
-        // Create FormData object to handle file upload
-        let formData = new FormData();
-        formData.append("prompt", prompt);
-  
-        if (_id) {
-          formData.append("chatId", _id);
-        }
-  
-        if (file) {
-          formData.append("file", file);
-        }
-  
-        if (_id) {
-          res = await instance.put("/api/chat", formData);
-        } else {
-          res = await instance.post("/api/chat", formData);
-        }
-      } catch (err) {
+      const formData = new FormData();
+      formData.append("prompt", prompt);
+
+      if (_id) {
+        formData.append("chatId", _id);
+      }
+
+      if (file) {
+        formData.append("file", file);
+        print("FILE: " ,file);
+      }
+      if (_id) {
+        res = await instance.put("/api/chat", formData);
+      } else {
+        res = await instance.post("/api/chat", formData);
+      }
+    } catch (err) {
         console.log(err);
         if (err?.response?.data?.status === 405) {
           dispatch(emptyUser());
@@ -179,20 +180,19 @@ const InputArea = ({ status, chatRef, stateAction }) => {
       } finally {
         if (res?.data) {
           const { _id, content } = res?.data?.data;
-  
+
           dispatch(insertNew({ _id, fullContent: content, chatsId }));
-  
+
           chatRef?.current?.loadResponse(stateAction, content, chatsId);
-  
+
           // Stop animation
           stateAction({ type: "resume", status: false });
-  
+
           stateAction({ type: "error", status: false });
         }
       }
     }
   };
-  
 
     useEffect(() => {
     const adjustTextAreaHeight = () => {
@@ -220,6 +220,7 @@ const InputArea = ({ status, chatRef, stateAction }) => {
 
   return (
     <div className="inputArea">
+    
       {!status.error ? (
         <>
           <div className="chatActionsLg">
@@ -247,6 +248,15 @@ const InputArea = ({ status, chatRef, stateAction }) => {
           </div>
 
           <div className="flexBody">
+          <div className="fileUpload">
+        <input
+          type="file"
+          id="fileInput"
+          onChange={handleFileChange}
+          style={{ display: "none" }}
+        />
+        <label htmlFor="fileInput">Upload File</label>
+      </div>
             <div className="box">
               <textarea
                 placeholder="Press Ctrl+Enter To Submit..."
@@ -258,14 +268,6 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                 onKeyDown={handleKeyDown} // Call handleKeyDown when a key is pressed
 
               />
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-              />
-              <button onClick={() => fileInputRef.current.click()}>Upload File</button>
-
 
               {!status?.loading ? (
                 <button onClick={FormHandle}>{<Rocket />}</button>
