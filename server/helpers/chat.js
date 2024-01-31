@@ -2,43 +2,43 @@ import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
 import user from "./user.js";
 
-const uploadFile = async (file) => {
-  // Implement file upload logic (e.g., saving the file to the server or cloud storage)
-  // Return the file URL or any identifier
-  // ...
 
-  return file; // Example: "https://example.com/uploads/file.txt"
-};
 const chatHelper = {
   newResponse: (prompt, { openai }, userId, chatId, file) => {
     return new Promise(async (resolve, reject) => {
       let res = null;
-
       try {
         await db.collection(collections.CHAT).createIndex({ user: 1 }, { unique: true });
-
-        // Check if a file is provided
-        
-        console.log("USerId in helper ",userId);
-        const fileUrl = file ? await uploadFile(file) : null;
-
-        res = await db.collection(collections.CHAT).insertOne({
-          user: userId.toString(),
-          data: [
+        const data = {
+          chatId,
+          chats: [
             {
-              chatId,
-              chats: [
-                {
-                  prompt,
-                  content: openai,
-                  // fileUrl: fileUrl, // Add fileUrl to the chats object
-                },
-              ],
+              prompt,
+              content: openai,
             },
           ],
+        };
+        if (file !== null) {
+          data.file_id = [file];
+        }
+        res = await db.collection(collections.CHAT).insertOne({
+          user: userId.toString(),
+          data: [data],
         });
       } catch (err) {
         if (err?.code === 11000) {
+          const dataToUpdate = {
+            chatId,
+            chats: [
+              {
+                prompt,
+                content: openai,
+              },
+            ],
+          };
+          if (file !== null) {
+            dataToUpdate.file_id = [file];
+          }
           res = await db
             .collection(collections.CHAT)
             .updateOne(
@@ -47,16 +47,7 @@ const chatHelper = {
               },
               {
                 $push: {
-                  data: {
-                    chatId,
-                    chats: [
-                      {
-                        prompt,
-                        content: openai,
-                        // fileUrl: fileUrl, // Add fileUrl to the chats object
-                      },
-                    ],
-                  },
+                  data: dataToUpdate,
                 },
               }
             )
@@ -93,6 +84,7 @@ const chatHelper = {
                 prompt,
                 content: openai,
               },
+              
             },
           }
         )
@@ -243,7 +235,64 @@ const chatHelper = {
     });
   },
 
+  fetchFileIds: async (userId, chatId) => {
+    try {
+      const result = await db.collection(collections.CHAT).findOne({
+        user: userId.toString(),
+        "data.chatId": chatId,
+      }, { "data.$": 1 });
+  
+      if (result && result.data && result.data.length > 0) {
+        const fileIds = result.data[0].file_id;
+        return fileIds || [];
+      } else {
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching file IDs:", error);
+      throw error;
+    }
+  },
 
+  updateOrAddFileId: async (userId, chatId, fileId) => {
+    try {
+      // Check if the file ID already exists for the given user and chat
+      const existingChat = await db.collection(collections.CHAT).findOne({
+        user: userId.toString(),
+        "data.chatId": chatId,
+        "data.file_id": fileId,
+      });
+  
+      if (existingChat) {
+        console.log("File already exists in updateOrAddFileId ");
+        return;
+      } else {
+        // If the file ID does not exist, add it to the database
+        const result = await db.collection(collections.CHAT).updateOne(
+          {
+            user: userId.toString(),
+            "data.chatId": chatId,
+          },
+          {
+            $addToSet: { "data.$.file_id": fileId },
+          }
+        );
+  
+        if (result.modifiedCount === 0) {
+          // If no document is modified, it means there's no chat entry for the given user and chat ID, so we need to create a new one
+          await db.collection(collections.CHAT).insertOne({
+            user: userId.toString(),
+            data: [{ chatId, file_id: [fileId], chats: [] }],
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating or adding file ID:", error);
+      throw error;
+    }
+  },
+  
+  
 
   saveModelType: (userId, modelType={ defaultValue: 'gpt-3.5-turbo' }) => {
     return new Promise((resolve, reject) => {

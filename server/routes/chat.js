@@ -3,34 +3,27 @@ import dotnet from "dotenv";
 import user from "../helpers/user.js";
 import jwt from "jsonwebtoken";
 import chat from "../helpers/chat.js";
-import OpenAI from "openai";
+import multer from "multer";
+
 import assistantFunctions from "../helpers/assistChat.js";
 import { sendErrorEmail } from "../mail/send.js";
-import fs from "fs";
-import multer from 'multer';
+
+
+dotnet.config();
+
+let sendingError = "";
+let router = Router();
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/'); // Specify the directory for storing uploaded files
+    cb(null, "uploads/"); // Specify the directory for storing uploaded files
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname); // Use a unique filename for each uploaded file
+    cb(null, Date.now() + "-" + file.originalname); // Use a unique filename for each uploaded file
   },
 });
 
 const upload = multer({ storage: storage });
-
-dotnet.config();
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  maxRetries: 3,
-  timeout: 60 * 1000,
-});
-
-
-let sendingError=''
-let router = Router();
 
 const CheckUser = async (req, res, next) => {
   jwt.verify(
@@ -57,7 +50,6 @@ const CheckUser = async (req, res, next) => {
         } finally {
           if (userData) {
             req.body.userId = userData._id;
-            console.log("Checkuser",req.body.userId);
             next();
           }
         }
@@ -71,92 +63,56 @@ const CheckUser = async (req, res, next) => {
   );
 };
 
-
 router.get("/", (req, res) => {
   res.send("Welcome to chatGPT api v1");
 });
 
-
-// Example API endpoint to get and update model type
-router.get("/modelType", CheckUser,async (req, res) => {
-  const userId = req.params.userId;
-
-  try {
-    // Call your getModelType function
-    const modelType = await chat.getModelType(userId);
-
-    res.status(200).json({
-      status: 200,
-      data: {
-        modelType,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-  }
-});
-
-router.put("/modelType",CheckUser, async (req, res) => {
-  const userId = req.body.userId;
-  const modelType = req.body.modelType;
-  console.log("modelType: " + modelType);
-  try {
-    // Call your saveModelType function
-    await chat.saveModelType(userId, modelType);
-
-    res.status(200).json({
-      status: 200,
-      message: "Model type updated successfully",
-    });
-  } catch (err) {
-    res.status(500).json({
-      status: 500,
-      message: err,
-    });
-  }
-});
-
-
-
 router.post("/", upload.single("file"), CheckUser, async (req, res) => {
   let response = {};
 
-  try{
-  const { prompt, userId } = req.body;
-  const file = req.file;
- 
-  //Upload a file with an "assistants" purpose
-  // const file = await openai.files.create({
-  //   file: fs.createReadStream("a.txt"),
-  //   purpose: "assistants",
-  // });
-  // console.log("File in chat: " ,file.id)
+  try {
+    const { prompt, userId } = req.body;
+    let file = null;
+    const filelocation = req.file;
 
+    const chatId = await assistantFunctions.createThread();
 
-  const chatId = await assistantFunctions.createThread('file-5N8avx0SU4vunfXKREb8C7N9',prompt)
-
-  const addMessage=await assistantFunctions.addMessage(chatId,prompt,'file-5N8avx0SU4vunfXKREb8C7N9')
-  const startRun=await assistantFunctions.startRun(chatId)
-
-  const result=await assistantFunctions.getRunStatus(chatId,startRun)
-
-  const mess=await assistantFunctions.getMessages(chatId)
-  const user=mess.data.UserMessage
-  const assist=mess.data.AssistantMessage
-
-  response.openai = assist;
-  console.log("Routes UserId",userId);
-  console.log("Routes prompt",prompt);
-  console.log("Routes chatId",chatId);
-  response.db = await chat.newResponse(prompt, response, userId, chatId, file);
-
+    file = await assistantFunctions.uploadFile(filelocation)
     
+    if (!file){
+      file = []
+    }else{
+      file = [file]
+    }
+   
+    const addMessage = await assistantFunctions.addMessage(
+      chatId,
+      prompt,
+      file
+    );
+    
+    const startRun = await assistantFunctions.startRun(chatId);
+    
+    const result = await assistantFunctions.getRunStatus(chatId, startRun);
+
+    const mess = await assistantFunctions.getMessages(chatId);
+    const user = mess.data.UserMessage;
+    const assist = mess.data.AssistantMessage;
+
+    response.openai = assist;
+    
+    console.log("Inside startRun :",assist)
+    
+    response.db = await chat.newResponse(
+      prompt,
+      response,
+      userId,
+      chatId,
+      file
+    );
   } catch (err) {
     sendingError = "Error in post" + err;
-    console.log(err)
+    console.log(err);
     //sendErrorEmail(sendingError);
 
     res.status(500).json({
@@ -167,7 +123,6 @@ router.post("/", upload.single("file"), CheckUser, async (req, res) => {
   }
 
   if (response.db && response.openai) {
-
     res.status(200).json({
       status: 200,
       message: "Success",
@@ -189,22 +144,38 @@ router.post("/", upload.single("file"), CheckUser, async (req, res) => {
 });
 
 router.put("/", upload.single("file"), CheckUser, async (req, res) => {
-  const { prompt, userId, chatId ,file} = req.body;
+  const { prompt, userId, chatId } = req.body;
+
+  const filelocation = req.file;
+  let file=null;
+
+
 
   let response = {};
-  try{
-    const addMessage=await assistantFunctions.addMessage(chatId,prompt)
-    const startRun=await assistantFunctions.startRun(chatId)
-  
-    const result=await assistantFunctions.getRunStatus(chatId,startRun)
+  try {
 
-    const mess=await assistantFunctions.getMessages(chatId)
-    const user=mess.data.UserMessage
-    const assist=mess.data.AssistantMessage
+    if (filelocation){
+        file = await assistantFunctions.uploadFile(filelocation)
+        await chat.updateOrAddFileId(userId,chatId)
+    }
+
+    file =await chat.fetchFileIds(userId,chatId)
+    console.log("File ID : ",file)
+    const addMessage = await assistantFunctions.addMessage(
+      chatId,
+      prompt,
+      file
+    );
+    const startRun = await assistantFunctions.startRun(chatId);
+
+    const result = await assistantFunctions.getRunStatus(chatId, startRun);
+
+    const mess = await assistantFunctions.getMessages(chatId);
+    const user = mess.data.UserMessage;
+    const assist = mess.data.AssistantMessage;
     response.openai = assist;
 
-  response.db = await chat.updateChat(chatId, user, response, userId);
-
+    response.db = await chat.updateChat(chatId, user, response, userId);
   } catch (err) {
     // sendingError = "Error in put chat" + err;
 
@@ -318,20 +289,68 @@ router.delete("/all", CheckUser, async (req, res) => {
     }
   }
 });
+
+// Example API endpoint to get and update model type
+router.get("/modelType", CheckUser, async (req, res) => {
+  const userId = req.params.userId;
+
+  try {
+    // Call your getModelType function
+    const modelType = await chat.getModelType(userId);
+
+    res.status(200).json({
+      status: 200,
+      data: {
+        modelType,
+      },
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 500,
+      message: err,
+    });
+  }
+});
+
+router.put("/modelType", CheckUser, async (req, res) => {
+  const userId = req.body.userId;
+  const modelType = req.body.modelType;
+  console.log("modelType: " + modelType);
+  try {
+    // Call your saveModelType function
+    await chat.saveModelType(userId, modelType);
+
+    res.status(200).json({
+      status: 200,
+      message: "Model type updated successfully",
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 500,
+      message: err,
+    });
+  }
+});
+
 router.post("/generateInvitationCodes", async (req, res) => {
   const { n, partner_name } = req.body; // Assuming 'n' is the number of codes to generate
 
   try {
     if (!n || isNaN(n) || n <= 0 || !partner_name) {
-      return res.status(400).json({ error: 'Invalid or missing values for n or partner_name.' });
+      return res
+        .status(400)
+        .json({ error: "Invalid or missing values for n or partner_name." });
     }
 
-    const result = await chat.generateAndInsertInvitationCodes(parseInt(n), partner_name);
+    const result = await chat.generateAndInsertInvitationCodes(
+      parseInt(n),
+      partner_name
+    );
     console.log(result);
     res.status(200).json(result);
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -340,14 +359,16 @@ router.post("/fetchInvitationCodesByPartnerName", async (req, res) => {
 
   try {
     if (!partner_name) {
-      return res.status(400).json({ error: 'Invalid or missing partner_name.' });
+      return res
+        .status(400)
+        .json({ error: "Invalid or missing partner_name." });
     }
 
     const codes = await chat.fetchInvitationCodesByPartnerName(partner_name);
     res.status(200).json({ codes });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 
@@ -356,29 +377,29 @@ router.post("/checkCodeAvailability", async (req, res) => {
 
   try {
     if (!code) {
-      return res.status(400).json({ error: 'Invalid or missing code.' });
+      return res.status(400).json({ error: "Invalid or missing code." });
     }
 
     const result = await chat.checkCodeAvailability(code);
     res.status(200).json(result);
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 router.post("/deleteCode", async (req, res) => {
-  const { code,userId } = req.body;
+  const { code, userId } = req.body;
 
   try {
     if (!code) {
-      return res.status(400).json({ error: 'Invalid or missing code.' });
+      return res.status(400).json({ error: "Invalid or missing code." });
     }
 
-    const result = await chat.deleteCode(userId,code);
+    const result = await chat.deleteCode(userId, code);
     res.status(200).json(result);
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 export default router;

@@ -100,7 +100,11 @@ const Main = () => {
   return (
     <div className="main">
       <div className="contentArea">
-        {status.chat ? <Chat ref={chatRef} status={status} error={status.error} /> : <New />}
+        {status.chat ? (
+          <Chat ref={chatRef} status={status} error={status.error} />
+        ) : (
+          <New />
+        )}
       </div>
       <InputArea status={status} chatRef={chatRef} stateAction={stateAction} />
     </div>
@@ -109,7 +113,6 @@ const Main = () => {
 
 //Input Area
 const InputArea = ({ status, chatRef, stateAction }) => {
-  
   let textAreaRef = useRef();
 
   const navigate = useNavigate();
@@ -120,11 +123,12 @@ const InputArea = ({ status, chatRef, stateAction }) => {
 
   const { prompt, content, _id } = useSelector((state) => state.messages);
 
-  const [textSubmitted,setTextSubmitted]=useState(false);
+  const [textSubmitted, setTextSubmitted] = useState(false);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
+    console.log("selected File", selectedFile);
   };
 
   const FormHandle = async () => {
@@ -145,30 +149,28 @@ const InputArea = ({ status, chatRef, stateAction }) => {
       if (textAreaRef.current) {
         textAreaRef.current.style.height = "auto";
         textAreaRef.current.style.height = "31px"; // Default height after submitting
-
-
       }
 
       let res = null;
 
       try {
-      const formData = new FormData();
-      formData.append("prompt", prompt);
+        const formData = new FormData();
+        formData.append("prompt", prompt);
 
-      if (_id) {
-        formData.append("chatId", _id);
-      }
+        if (_id) {
+          formData.append("chatId", _id);
+        }
 
-      if (file) {
-        formData.append("file", file);
-        print("FILE: " ,file);
-      }
-      if (_id) {
-        res = await instance.put("/api/chat", formData);
-      } else {
-        res = await instance.post("/api/chat", formData);
-      }
-    } catch (err) {
+        if (file) {
+          formData.append("file", file);
+          print("FILE: ", file);
+        }
+        if (_id) {
+          res = await instance.put("/api/chat", formData);
+        } else {
+          res = await instance.post("/api/chat", formData);
+        }
+      } catch (err) {
         console.log(err);
         if (err?.response?.data?.status === 405) {
           dispatch(emptyUser());
@@ -194,22 +196,19 @@ const InputArea = ({ status, chatRef, stateAction }) => {
     }
   };
 
-    useEffect(() => {
+  useEffect(() => {
     const adjustTextAreaHeight = () => {
       textAreaRef.current.style.height = "auto"; // Reset height to auto
-      textAreaRef.current.style.height = textAreaRef.current.scrollHeight + "px";
-      
+      textAreaRef.current.style.height =
+        textAreaRef.current.scrollHeight + "px";
     };
 
     textAreaRef.current.addEventListener("input", adjustTextAreaHeight);
 
-
     if (textAreaRef.current && prompt.length === 0 && textSubmitted) {
-      textAreaRef.current.style.height="31 px"
+      textAreaRef.current.style.height = "31 px";
     }
-    
-  }, [prompt,textSubmitted]);
-
+  }, [prompt, textSubmitted]);
 
   const handleKeyDown = (e) => {
     if (e.ctrlKey && e.key === "Enter") {
@@ -220,13 +219,12 @@ const InputArea = ({ status, chatRef, stateAction }) => {
 
   return (
     <div className="inputArea">
-    
       {!status.error ? (
         <>
           <div className="chatActionsLg">
             {status.chat && content?.length > 0 && status.actionBtns && (
               <>
-                {!status?.resume ? ( null
+                {!status?.resume ? null : (
                   // <button
                   //   onClick={() => {
                   //     chatRef.current.loadResponse(stateAction);
@@ -234,7 +232,6 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                   // >
                   //   <Reload /> Regenerate response
                   // </button>
-                )  : (
                   <button
                     onClick={() => {
                       chatRef.current.stopResponse(stateAction);
@@ -248,15 +245,15 @@ const InputArea = ({ status, chatRef, stateAction }) => {
           </div>
 
           <div className="flexBody">
-          <div className="fileUpload">
-        <input
-          type="file"
-          id="fileInput"
-          onChange={handleFileChange}
-          style={{ display: "none" }}
-        />
-        <label htmlFor="fileInput">Upload File</label>
-      </div>
+            <div className="fileUpload">
+              <input
+                type="file"
+                id="fileInput"
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+              />
+              <label htmlFor="fileInput">Upload File</label>
+            </div>
             <div className="box">
               <textarea
                 placeholder="Press Ctrl+Enter To Submit..."
@@ -266,7 +263,6 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                   dispatch(livePrompt(e.target.value));
                 }}
                 onKeyDown={handleKeyDown} // Call handleKeyDown when a key is pressed
-
               />
 
               {!status?.loading ? (
@@ -324,8 +320,8 @@ const InputArea = ({ status, chatRef, stateAction }) => {
         >
           ChatGPT Mar 14 Version.
       </a>{" "}*/}
-        Free Bayes Preview Research. Our goal is to make AI systems more natural and
-        safe to interact with. Your feedback will help us improve.
+        Free Bayes Preview Research. Our goal is to make AI systems more natural
+        and safe to interact with. Your feedback will help us improve.
       </div>
     </div>
   );
