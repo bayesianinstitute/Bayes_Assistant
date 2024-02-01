@@ -76,7 +76,7 @@ router.post("/", upload.single("file"), CheckUser, async (req, res) => {
     const filelocation = req.file;
 
     const chatId = await assistantFunctions.createThread();
-
+    console.log("FILE IN POST LOCATIONS", filelocation)
     file = await assistantFunctions.uploadFile(filelocation)
     
     if (!file){
@@ -84,7 +84,7 @@ router.post("/", upload.single("file"), CheckUser, async (req, res) => {
     }else{
       file = [file]
     }
-   
+    console.log("FILE IN POST", file)
     const addMessage = await assistantFunctions.addMessage(
       chatId,
       prompt,
@@ -160,7 +160,8 @@ router.put("/", upload.single("file"), CheckUser, async (req, res) => {
     }
 
     file =await chat.fetchFileIds(userId,chatId)
-    console.log("File ID : ",file)
+
+    console.log("File ID in PUT: ",file)
     const addMessage = await assistantFunctions.addMessage(
       chatId,
       prompt,

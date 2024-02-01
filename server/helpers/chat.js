@@ -244,7 +244,7 @@ const chatHelper = {
   
       if (result && result.data && result.data.length > 0) {
         const fileIds = result.data[0].file_id;
-        return fileIds || [];
+        return fileIds ? fileIds.filter(id => id !== null).flat() : [];
       } else {
         return [];
       }
@@ -253,6 +253,7 @@ const chatHelper = {
       throw error;
     }
   },
+  
 
   updateOrAddFileId: async (userId, chatId, fileId) => {
     try {
