@@ -124,10 +124,12 @@ const InputArea = ({ status, chatRef, stateAction }) => {
   const { prompt, content, _id } = useSelector((state) => state.messages);
 
   const [textSubmitted, setTextSubmitted] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("");
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     setFile(selectedFile);
+    setUploadedFileName(selectedFile ? selectedFile.name : ""); // Set the uploaded file name
     console.log("selected File", selectedFile);
   };
 
@@ -186,7 +188,8 @@ const InputArea = ({ status, chatRef, stateAction }) => {
           dispatch(insertNew({ _id, fullContent: content, chatsId }));
 
           chatRef?.current?.loadResponse(stateAction, content, chatsId);
-
+          setFile(null);
+          setUploadedFileName("");
           // Stop animation
           stateAction({ type: "resume", status: false });
 
@@ -246,14 +249,14 @@ const InputArea = ({ status, chatRef, stateAction }) => {
 
           <div className="flexBody">
             <div className="fileUpload">
-              <input
-                type="file"
-                id="fileInput"
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-              />
-              <label htmlFor="fileInput">Upload File</label>
-            </div>
+                <input
+                  type="file"
+                  id="fileInput"
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+                <label htmlFor="fileInput">{uploadedFileName || "Upload File"}</label>
+              </div>
             <div className="box">
               <textarea
                 placeholder="Press Ctrl+Enter To Submit..."
