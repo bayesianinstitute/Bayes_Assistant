@@ -49,7 +49,9 @@ const Main = () => {
   const chatRef = useRef();
 
   const { user } = useSelector((state) => state);
-
+  const isUserExpired = user.expireAt && new Date(user.expireAt) < new Date();
+  console.log('User in chat:', user);
+  console.log('Is User Expired in chat:', isUserExpired);
   const { id = null } = useParams();
 
   const [status, stateAction] = useReducer(reducer, {
@@ -257,7 +259,10 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                 />
                 <label htmlFor="fileInput">{uploadedFileName || "Upload File"}</label>
               </div>
+
+           
             <div className="box">
+          
               <textarea
                 placeholder="Press Ctrl+Enter To Submit..."
                 ref={textAreaRef}
@@ -265,9 +270,10 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                 onChange={(e) => {
                   dispatch(livePrompt(e.target.value));
                 }}
+                
                 onKeyDown={handleKeyDown} // Call handleKeyDown when a key is pressed
               />
-
+            
               {!status?.loading ? (
                 <button onClick={FormHandle}>{<Rocket />}</button>
               ) : (
@@ -278,6 +284,7 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                 </div>
               )}
             </div>
+            
 
             {status.chat && content?.length > 0 && status.actionBtns && (
               <>
@@ -305,6 +312,7 @@ const InputArea = ({ status, chatRef, stateAction }) => {
               </>
             )}
           </div>
+
         </>
       ) : (
         <div className="error">

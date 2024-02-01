@@ -40,9 +40,9 @@ const ProtectedRoute = ({ offline, authed }) => {
           }
         } else if (err?.response?.data?.message?.status === 410){
 
-          console.log("Your invation code is expired")
-          alert("Your invation code is expired")
-          navigate("/update_invitation_code"); 
+          // console.log("Your invation code is expired")
+          // alert("Your invation code is expired")
+          // navigate("/update_invitation_code"); 
           
         }
         else if (err?.code !== "ERR_NETWORK") {

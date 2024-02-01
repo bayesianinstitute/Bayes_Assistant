@@ -68,7 +68,8 @@ const App = () => {
           <Route exact path="/" element={<Main />} />
           <Route path="/chat" element={<Main />} />
           <Route path="/chat/:id" element={<Main />} />
-          <Route path="/update_invitation_code" element={<UpdateInvitationCode />} /> {/* Add route for UpdateInvitationCode */}
+          {/* <Route path="/update_invitation_code" element={<UpdateInvitationCode />} />  */}
+          {/* Add route for UpdateInvitationCode */}
         </Route>
 
         <Route element={<ProtectedRoute offline={offline} />}>

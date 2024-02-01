@@ -363,8 +363,34 @@ const chatHelper = {
     });
   },
   
+  updateInvitationCode: (userId, invitationCode) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        console.log(userId)
+        const userUpdateResult = await db.collection(collections.USER).updateOne(
+          { _id: userId },
+          {
+            $set: {
+              inviteCode: invitationCode,
+              expireAt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000), 
+            },
+          }
+        );
   
+        if (userUpdateResult.nModified > 0) {
+          resolve({ success: true, message: 'Invitation code updated successfully.' });
+          console.log(userUpdateResult);
+        } else {
+          reject(new Error('User not found or invitationCode not updated.'));
+        }
+      } catch (error) {
+        console.error('Error updating invitation code:', error);
+        reject(error);
+      }
+    });
+  },
   
+
   fetchInvitationCodesByPartnerName: (partner_name) => {
     return new Promise(async (resolve, reject) => {
       try {
