@@ -250,18 +250,25 @@ const Modal = ({ changeColorMode, settingRef }) => {
   const handleInvitationCodeChange = (event) => {
     setInvitationCode(event.target.value);
   };
+
   const handleUpdateInvitationCode = async () => {
-    // Make an API call to update the invitation code using Axios
-    try {
-      const response = await axios.put('/api/chat/update-invitation-code', {
-        code: invitationCode, // Assuming you have the invitationCode state variable
-      });
+    const confirmUpdate = window.confirm("Do you want to update the invitation code?");
   
-      console.log('Invitation code updated successfully:', response.data);
-    } catch (error) {
-      console.error('Error updating invitation code:', error.message);
+    if (confirmUpdate) {
+      try {
+        const response = await axios.put('/api/chat/update-invitation-code', {
+          code: invitationCode,
+        });
+  
+        console.log('Invitation code updated successfully:', response.data);
+      } catch (error) {
+        console.error('Error updating invitation code:', error.message);
+      }
+    } else {
+      console.log('Invitation code update canceled.');
     }
   };
+  
 
   const dispatch = useDispatch()
   const navigate = useNavigate()
@@ -350,15 +357,19 @@ const Modal = ({ changeColorMode, settingRef }) => {
 
                   {/* Invitation code input */}
                   <p>Invitation Code:</p>
-                  <input
-            type="text"
-            placeholder="Enter Invitation Code"
-            value={invitationCode}
-            onChange={handleInvitationCodeChange}
-          />
-
-          {/* Update Invitation Code button */}
-          <button onClick={handleUpdateInvitationCode}>Update</button>
+          <div className="invitation-code-input">
+            <input
+              type="text"
+              placeholder="Enter Invitation Code"
+              value={invitationCode}
+              onChange={handleInvitationCodeChange}
+            />
+             <div className="bottum">
+            <button onClick={handleUpdateInvitationCode}>
+              Update
+            </button>
+            </div>
+          </div>
         </div>
 
         <div className="bottum">

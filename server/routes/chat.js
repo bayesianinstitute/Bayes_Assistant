@@ -354,26 +354,26 @@ router.post("/generateInvitationCodes", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
-router.put("/update-invitation-code", async (req, res) => {
-  const userId ='65b80ba69a6c454c25aeda86'; // Assuming userId is required for updating the invitation code
+router.put("/update-invitation-code", CheckUser, async (req, res) => {
+  const userId = req.body.userId;
   const invitationCode = req.body.code;
   console.log(invitationCode);
-  console.log(userId);
-  const update =await chat.updateInvitationCode(userId, invitationCode);
-  res.status(200).json({ update });
-  // try {
-  //   // Call your updateInvitationCode function
-  //     const update =await chat.updateInvitationCode(userId, invitationCode);
+  console.log("UserId ",userId);
 
-  //     res.status(200).json({ update });
+  try {
+    // Call your updateInvitationCode function
+    const update = await chat.updateInvitationCode(userId, invitationCode);
 
-  // } catch (err) {
-  //   res.status(500).json({
-  //     status: 500,
-  //     message: err,
-  //   });
-  // }
+    res.status(200).json({ update });
+  } catch (err) {
+    console.error('Error updating invitation code:', err); // Log the error
+    res.status(500).json({
+      status: 500,
+      message: err.message || 'Internal Server Error',
+    });
+  }
 });
+
 router.post("/fetchInvitationCodesByPartnerName", async (req, res) => {
   const { partner_name } = req.body;
 

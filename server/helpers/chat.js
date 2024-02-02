@@ -1,6 +1,7 @@
 import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
 import user from "./user.js";
+import { ObjectId } from "mongodb";
 
 
 const chatHelper = {
@@ -363,25 +364,41 @@ const chatHelper = {
     });
   },
   
-  updateInvitationCode: (userId, invitationCode) => {
+  updateInvitationCode: async (userId, invitationCode) => {
     return new Promise(async (resolve, reject) => {
       try {
-        console.log(userId)
-        const userUpdateResult = await db.collection(collections.USER).updateOne(
-          { _id: userId },
-          {
-            $set: {
-              inviteCode: invitationCode,
-              expireAt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000), 
-            },
-          }
-        );
+        // Check if the invitation code exists in INVITATION collection
+        const invitationExists = await db.collection(collections.INVITATION).findOne({ codes: invitationCode });
+        console.log(invitationExists)
+        if (invitationExists) {
+          // Update USER collection
+          const userUpdateResult = await db.collection(collections.USER).updateOne(
+            { _id: new ObjectId(userId) },
+            {
+              $set: {
+                inviteCode: invitationCode,
+                expireAt: new Date(new Date().getTime() + 30 * 24 * 60 * 60 * 1000),
+              },
+            }
+          );
   
-        if (userUpdateResult.nModified > 0) {
-          resolve({ success: true, message: 'Invitation code updated successfully.' });
-          console.log(userUpdateResult);
+          console.log("userUpdateResult", userUpdateResult);
+  
+          if (userUpdateResult.modifiedCount > 0) {
+            // Remove the code from INVITATION collection
+            const removeCodeResult = await db.collection(collections.INVITATION).updateOne(
+              { codes: invitationCode },
+              { $pull: { codes: invitationCode } }
+            );
+  
+            console.log("removeCodeResult", removeCodeResult);
+  
+            resolve({ success: true, message: 'Invitation code updated successfully.' });
+          } else {
+            reject(new Error('User not found or invitationCode not updated.'));
+          }
         } else {
-          reject(new Error('User not found or invitationCode not updated.'));
+          reject(new Error('Invitation code not found in INVITATION collection.'));
         }
       } catch (error) {
         console.error('Error updating invitation code:', error);

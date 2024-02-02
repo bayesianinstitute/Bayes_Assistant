@@ -420,3 +420,18 @@ header {
     }
   }
 }
+
+// Add the following CSS styles to your style.scss or the appropriate stylesheet
+.invitation-code-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.invitation-code-input input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 1; /* Take remaining space */
+}
+
