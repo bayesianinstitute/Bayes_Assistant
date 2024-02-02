@@ -20,7 +20,7 @@ const chatHelper = {
           ],
         };
         if (file !== null) {
-          data.file_id = [file];
+          data.file_id = file;
         }
         res = await db.collection(collections.CHAT).insertOne({
           user: userId.toString(),
@@ -236,13 +236,15 @@ const chatHelper = {
     });
   },
 
+
   fetchFileIds: async (userId, chatId) => {
     try {
       const result = await db.collection(collections.CHAT).findOne({
         user: userId.toString(),
         "data.chatId": chatId,
-      }, { "data.$": 1 });
-  
+      }, { projection: { _id: 0, data: { $elemMatch: { chatId: chatId } } } });
+      
+      console.log("result",result);
       if (result && result.data && result.data.length > 0) {
         const fileIds = result.data[0].file_id;
         return fileIds ? fileIds.filter(id => id !== null).flat() : [];
@@ -255,38 +257,26 @@ const chatHelper = {
     }
   },
   
-
   updateOrAddFileId: async (userId, chatId, fileId) => {
     try {
-      // Check if the file ID already exists for the given user and chat
-      const existingChat = await db.collection(collections.CHAT).findOne({
-        user: userId.toString(),
-        "data.chatId": chatId,
-        "data.file_id": fileId,
-      });
-  
-      if (existingChat) {
-        console.log("File already exists in updateOrAddFileId ");
-        return;
-      } else {
-        // If the file ID does not exist, add it to the database
-        const result = await db.collection(collections.CHAT).updateOne(
-          {
-            user: userId.toString(),
-            "data.chatId": chatId,
-          },
-          {
-            $addToSet: { "data.$.file_id": fileId },
-          }
-        );
-  
-        if (result.modifiedCount === 0) {
-          // If no document is modified, it means there's no chat entry for the given user and chat ID, so we need to create a new one
-          await db.collection(collections.CHAT).insertOne({
-            user: userId.toString(),
-            data: [{ chatId, file_id: [fileId], chats: [] }],
-          });
+      console.log("Updating file", fileId);
+      const result = await db.collection(collections.CHAT).updateOne(
+        {
+          user: userId.toString(),
+          "data.chatId": chatId,
+        },
+        {
+          $push: { "data.$.file_id": fileId },
         }
+      );
+      console.log("result", result);
+  
+      if (result.modifiedCount === 0) {
+        // If no document is modified, it means there's no chat entry for the given user and chat ID, so we need to create a new one
+        await db.collection(collections.CHAT).insertOne({
+          user: userId.toString(),
+          data: [{ chatId, file_id: [fileId], chats: [] }],
+        });
       }
     } catch (error) {
       console.error("Error updating or adding file ID:", error);

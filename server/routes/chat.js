@@ -145,9 +145,9 @@ router.post("/", upload.single("file"), CheckUser, async (req, res) => {
 
 router.put("/", upload.single("file"), CheckUser, async (req, res) => {
   const { prompt, userId, chatId } = req.body;
-
+  let file = null;
+  let filename  = null;
   const filelocation = req.file;
-  let file=null;
 
 
 
@@ -155,8 +155,10 @@ router.put("/", upload.single("file"), CheckUser, async (req, res) => {
   try {
 
     if (filelocation){
-        file = await assistantFunctions.uploadFile(filelocation)
-        await chat.updateOrAddFileId(userId,chatId)
+        filename = await assistantFunctions.uploadFile(filelocation)
+        console.log("Filename", filename)
+        await chat.updateOrAddFileId(userId,chatId,filename)
+        console.log("Entered File Location")
     }
 
     file =await chat.fetchFileIds(userId,chatId)
