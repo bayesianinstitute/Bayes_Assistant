@@ -7,22 +7,22 @@ const chatHelper = {
 
       let res = null;
       try {
-        await db
-          .collection(collections.CHAT)
-          .createIndex({ user: 1 }, { unique: true });
-        res = await db.collection(collections.CHAT).insertOne({
-          user: userId.toString(),
-          data: [
+        await db.collection(collections.CHAT).createIndex({ user: 1 }, { unique: true });
+        const data = {
+          chatId,
+          chats: [
             {
-              chatId,
-              chats: [
-                {
-                  prompt,
-                  content: openai,
-                },
-              ],
+              prompt,
+              content: openai,
             },
           ],
+        };
+        if (file !== null) {
+          data.file_id = file;
+        }
+        res = await db.collection(collections.CHAT).insertOne({
+          user: userId.toString(),
+          data: [data],
         });
       } catch (err) {
         if (err?.code === 11000) {
@@ -231,6 +231,54 @@ const chatHelper = {
   },
 
 
+  fetchFileIds: async (userId, chatId) => {
+    try {
+      const result = await db.collection(collections.CHAT).findOne({
+        user: userId.toString(),
+        "data.chatId": chatId,
+      }, { projection: { _id: 0, data: { $elemMatch: { chatId: chatId } } } });
+      
+      console.log("result",result);
+      if (result && result.data && result.data.length > 0) {
+        const fileIds = result.data[0].file_id;
+        return fileIds ? fileIds.filter(id => id !== null).flat() : [];
+      } else {
+        return [];
+      }
+    } catch (error) {
+      console.error("Error fetching file IDs:", error);
+      throw error;
+    }
+  },
+  
+  updateOrAddFileId: async (userId, chatId, fileId) => {
+    try {
+      console.log("Updating file", fileId);
+      const result = await db.collection(collections.CHAT).updateOne(
+        {
+          user: userId.toString(),
+          "data.chatId": chatId,
+        },
+        {
+          $push: { "data.$.file_id": fileId },
+        }
+      );
+      console.log("result", result);
+  
+      if (result.modifiedCount === 0) {
+        // If no document is modified, it means there's no chat entry for the given user and chat ID, so we need to create a new one
+        await db.collection(collections.CHAT).insertOne({
+          user: userId.toString(),
+          data: [{ chatId, file_id: [fileId], chats: [] }],
+        });
+      }
+    } catch (error) {
+      console.error("Error updating or adding file ID:", error);
+      throw error;
+    }
+  },
+  
+  
 
   saveModelType: (userId, modelType={ defaultValue: 'gpt-3.5-turbo' }) => {
     return new Promise((resolve, reject) => {

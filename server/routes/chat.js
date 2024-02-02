@@ -158,13 +158,33 @@ router.post("/", CheckUser, async (req, res) => {
 
 router.put("/", CheckUser, async (req, res) => {
   const { prompt, userId, chatId } = req.body;
+  let file = null;
+  let filename  = null;
+  const filelocation = req.file;
+
+
 
   let response = {};
-  try{
-    const addMessage=await assistantFunctions.addMessage(chatId,prompt)
-    const startRun=await assistantFunctions.startRun(chatId)
-  
-    const result=await assistantFunctions.getRunStatus(chatId,startRun)
+  try {
+
+    if (filelocation){
+        filename = await assistantFunctions.uploadFile(filelocation)
+        console.log("Filename", filename)
+        await chat.updateOrAddFileId(userId,chatId,filename)
+        console.log("Entered File Location")
+    }
+
+    file =await chat.fetchFileIds(userId,chatId)
+
+    console.log("File ID in PUT: ",file)
+    const addMessage = await assistantFunctions.addMessage(
+      chatId,
+      prompt,
+      file
+    );
+    const startRun = await assistantFunctions.startRun(chatId);
+
+    const result = await assistantFunctions.getRunStatus(chatId, startRun);
 
     const mess=await assistantFunctions.getMessages(chatId)
     const user=mess.data.UserMessage
