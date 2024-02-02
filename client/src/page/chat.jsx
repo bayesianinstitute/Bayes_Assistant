@@ -48,12 +48,10 @@ const Main = () => {
 
   const chatRef = useRef();
 
+
+  const { id = null } = useParams();
   const { user } = useSelector((state) => state);
   const isUserExpired = user.expireAt && new Date(user.expireAt) < new Date();
-  console.log('User in chat:', user);
-  console.log('Is User Expired in chat:', isUserExpired);
-  const { id = null } = useParams();
-
   const [status, stateAction] = useReducer(reducer, {
     chat: false,
     error: false,
@@ -109,6 +107,11 @@ const Main = () => {
         )}
       </div>
       <InputArea status={status} chatRef={chatRef} stateAction={stateAction} />
+      {isUserExpired && (
+        <div className="expiredAlert">
+          <p>Your invitation code has expired. Please update it to continue.Goto Setting and then Update Invitation Code</p>
+        </div>
+      )}
     </div>
   );
 };
@@ -122,6 +125,10 @@ const InputArea = ({ status, chatRef, stateAction }) => {
   const dispatch = useDispatch();
 
   const [file, setFile] = useState(null);
+  const { user } = useSelector((state) => state);
+  const isUserExpired = user.expireAt && new Date(user.expireAt) < new Date();
+  console.log('User in chat:', user);
+  console.log('Is User Expired in chat:', isUserExpired);
 
   const { prompt, content, _id } = useSelector((state) => state.messages);
 
@@ -167,7 +174,6 @@ const InputArea = ({ status, chatRef, stateAction }) => {
 
         if (file) {
           formData.append("file", file);
-          print("FILE: ", file);
         }
         if (_id) {
           res = await instance.put("/api/chat", formData);
@@ -211,9 +217,9 @@ const InputArea = ({ status, chatRef, stateAction }) => {
     textAreaRef.current.addEventListener("input", adjustTextAreaHeight);
 
     if (textAreaRef.current && prompt.length === 0 && textSubmitted) {
-      textAreaRef.current.style.height = "31 px";
+      textAreaRef.current.style.height = "31px";
     }
-  }, [prompt, textSubmitted]);
+  }, [prompt, textSubmitted, textAreaRef]);
 
   const handleKeyDown = (e) => {
     if (e.ctrlKey && e.key === "Enter") {
@@ -226,6 +232,7 @@ const InputArea = ({ status, chatRef, stateAction }) => {
     <div className="inputArea">
       {!status.error ? (
         <>
+        
           <div className="chatActionsLg">
             {status.chat && content?.length > 0 && status.actionBtns && (
               <>
@@ -256,6 +263,7 @@ const InputArea = ({ status, chatRef, stateAction }) => {
                   id="fileInput"
                   onChange={handleFileChange}
                   style={{ display: "none" }}
+                  disabled={isUserExpired}
                 />
                 <label htmlFor="fileInput">{uploadedFileName || "Upload File"}</label>
               </div>
@@ -263,16 +271,17 @@ const InputArea = ({ status, chatRef, stateAction }) => {
            
             <div className="box">
           
-              <textarea
-                placeholder="Press Ctrl+Enter To Submit..."
-                ref={textAreaRef}
-                value={prompt}
-                onChange={(e) => {
-                  dispatch(livePrompt(e.target.value));
-                }}
-                
-                onKeyDown={handleKeyDown} // Call handleKeyDown when a key is pressed
-              />
+            <textarea
+                    placeholder="Press Ctrl+Enter To Submit..."
+                    ref={textAreaRef}
+                    value={prompt}
+                    onChange={(e) => {
+                      dispatch(livePrompt(e.target.value));
+                    }}
+                    onKeyDown={handleKeyDown}
+                    disabled={isUserExpired} // Add this line to disable textarea when user is expired
+                  />
+
             
               {!status?.loading ? (
                 <button onClick={FormHandle}>{<Rocket />}</button>

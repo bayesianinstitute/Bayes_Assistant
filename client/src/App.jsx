@@ -11,6 +11,8 @@ const App = () => {
   const [offline, setOffline] = useState(!window.navigator.onLine);
 
   const { loading, user } = useSelector((state) => state);
+  
+  
 
   const changeColorMode = (to) => {
     if (to) {

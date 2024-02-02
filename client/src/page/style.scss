@@ -559,3 +559,22 @@
     }
   }
 }
+
+.expiredAlert {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: 16px;
+  background-color: #ffdddd;
+  color: #8b0000;
+  border: 1px solid #8b0000;
+  border-radius: 4px;
+  width: 300px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.expiredAlert p {
+  margin: 0;
+}

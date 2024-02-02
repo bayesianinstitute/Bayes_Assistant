@@ -161,7 +161,7 @@ const Menu = ({ changeColorMode }) => {
       </header>
 
       <div className="menu" ref={menuRef}>
-        {!isUserExpired && (
+      
           <div>
             <button
               type='button'
@@ -173,12 +173,13 @@ const Menu = ({ changeColorMode }) => {
                   navigate('/chat');
                 }
               }}
+              disabled={isUserExpired}
             >
+            
               <Plus />New chat
             </button>
           </div>
-        )}
-
+     
         <div className="history">
           {
             history?.map((obj, key) => {
