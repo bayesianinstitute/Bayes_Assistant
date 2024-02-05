@@ -356,7 +356,8 @@ router.get("/userDetails", CheckUser, async (req, res) => {
       status: !isExpired,
       fName: user.fName,
       lName: user.lName,
-      expireAt: isExpired ? "expired" : user.expireAt,
+      expireAt:  user.expireAt,
+      inviteCode: user.inviteCode
     };
 
     res.status(200).json(userDetails);
