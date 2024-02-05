@@ -2,6 +2,7 @@ import { db } from "../db/connection.js";
 import collections from "../db/collections.js";
 import user from "./user.js";
 import { ObjectId } from "mongodb";
+import { v4 as uuidv4 } from 'uuid';
 
 
 const chatHelper = {
@@ -334,7 +335,7 @@ const chatHelper = {
         const codes = Array.from({ length: n }, () => {
           let code;
           do {
-            code = Math.floor(Math.random() * 900000) + 100000;
+             code = uuidv4(); // Generating UUID
           } while (existingCodes.includes(code.toString()));
   
           return code.toString();
@@ -478,6 +479,23 @@ const chatHelper = {
       }
     });
   },
+  getUserDetails: async (userId) => {
+   
+    return new Promise(async (resolve, reject) => {
+    
+        const user = await db.collection(collections.USER).findOne({ _id: new ObjectId(userId) });  
+        
+        
+        if (!user) {
+          reject("User not found");
+          return;
+        }
+        console.log(user)
+        resolve(user);
+  
+    });
+  },
+  
 
 };
 
