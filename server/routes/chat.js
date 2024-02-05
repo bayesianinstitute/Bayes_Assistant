@@ -335,6 +335,39 @@ router.put("/modelType", CheckUser, async (req, res) => {
   }
 });
 
+router.get("/userDetails", CheckUser, async (req, res) => {
+  const userId = req.body.userId;
+
+  try {
+    const user = await chat.getUserDetails(userId);
+   
+    if (!user) {
+      res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+      return;
+    }
+
+    const currentDate = new Date();
+    const isExpired = currentDate > new Date(user.expireAt);
+
+    const userDetails = {
+      status: !isExpired,
+      fName: user.fName,
+      lName: user.lName,
+      expireAt: isExpired ? "expired" : user.expireAt,
+    };
+
+    res.status(200).json(userDetails);
+  } catch (err) {
+    res.status(500).json({
+      status: false,
+      message: err,
+    });
+  }
+});
+
 router.post("/generateInvitationCodes", async (req, res) => {
   const { n, partner_name } = req.body; // Assuming 'n' is the number of codes to generate
 
@@ -424,4 +457,5 @@ router.post("/deleteCode", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 export default router;
