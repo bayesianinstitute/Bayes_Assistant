@@ -12,7 +12,7 @@ import axios from 'axios';
 
 const Menu = ({ changeColorMode }) => {
   let path = window.location.pathname
-
+  
   const menuRef = useRef(null)
   const btnRef = useRef(null)
   const settingRef = useRef(null)
@@ -20,8 +20,13 @@ const Menu = ({ changeColorMode }) => {
   const navigate = useNavigate()
   const dispatch = useDispatch()
 
-  const { history } = useSelector((state) => state)
+  // const { history } = useSelector((state) => state)
+  const { history, user } = useSelector((state) => state);
   const [confirm, setConfim] = useState(false)
+  const isUserExpired = user.expireAt && new Date(user.expireAt) < new Date();
+  console.log('User:', user);
+  console.log('Is User Expired:', isUserExpired);
+
 
   const logOut = async () => {
     if (window.confirm("Do you want log out")) {
@@ -117,8 +122,10 @@ const Menu = ({ changeColorMode }) => {
     dispatch(activePage(chatId))
   }, [path, history])
 
+
   return (
     <Fragment>
+    
       <Modal
         changeColorMode={changeColorMode}
         settingRef={settingRef}
@@ -136,33 +143,43 @@ const Menu = ({ changeColorMode }) => {
         </div>
 
         <div className='end'>
-          <button onClick={() => {
-            if (path.includes('/chat')) {
-              navigate('/')
-            } else {
-              navigate('/chat')
-            }
-          }}><Plus /></button>
-        </div>
+        <button
+            onClick={() => {
+              if (!isUserExpired) {
+                if (path.includes('/chat')) {
+                  navigate('/');
+                } else {
+                  navigate('/chat');
+                }
+              }
+            }}
+            disabled={isUserExpired} // Disable the button if the user is expired
+          >
+            <Plus />
+          </button>
+          </div>
       </header>
 
       <div className="menu" ref={menuRef}>
-        <div>
-          <button
-            type='button'
-            aria-label='new'
-            onClick={() => {
-              if (path.includes('/chat')) {
-                navigate('/')
-              } else {
-                navigate('/chat')
-              }
-            }}
-          >
-            <Plus />New chat
-          </button>
-        </div>
-
+      
+          <div>
+            <button
+              type='button'
+              aria-label='new'
+              onClick={() => {
+                if (path.includes('/chat')) {
+                  navigate('/');
+                } else {
+                  navigate('/chat');
+                }
+              }}
+              disabled={isUserExpired}
+            >
+            
+              <Plus />New chat
+            </button>
+          </div>
+     
         <div className="history">
           {
             history?.map((obj, key) => {
@@ -229,6 +246,31 @@ const Menu = ({ changeColorMode }) => {
 export default Menu
 
 const Modal = ({ changeColorMode, settingRef }) => {
+  const [invitationCode, setInvitationCode] = useState('');
+
+  const handleInvitationCodeChange = (event) => {
+    setInvitationCode(event.target.value);
+  };
+
+  const handleUpdateInvitationCode = async () => {
+    const confirmUpdate = window.confirm("Do you want to update the invitation code?");
+  
+    if (confirmUpdate) {
+      try {
+        const response = await axios.put('/api/chat/update-invitation-code', {
+          code: invitationCode,
+        });
+  
+        console.log('Invitation code updated successfully:', response.data);
+      } catch (error) {
+        console.error('Error updating invitation code:', error.message);
+      }
+    } else {
+      console.log('Invitation code update canceled.');
+    }
+  };
+  
+
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
@@ -314,7 +356,23 @@ const Modal = ({ changeColorMode, settingRef }) => {
           </select>
           */}
 
+                  {/* Invitation code input */}
+                  <p>Invitation Code:</p>
+          <div className="invitation-code-input">
+            <input
+              type="text"
+              placeholder="Enter Invitation Code"
+              value={invitationCode}
+              onChange={handleInvitationCodeChange}
+            />
+             <div className="bottum">
+            <button onClick={handleUpdateInvitationCode}>
+              Update
+            </button>
+            </div>
+          </div>
         </div>
+
         <div className="bottum">
           {/* <button>Export data</button> */}
           <button className='end' onClick={deleteAccount}>Delete account</button>

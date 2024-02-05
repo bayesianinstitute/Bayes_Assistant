@@ -1,8 +1,9 @@
 import OpenAI from "openai";
+import fs from "fs";
 import dotnet from "dotenv";
 
 dotnet.config();
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   maxRetries: 3,
@@ -13,7 +14,6 @@ const assistantFunctions = {
   createThread: async () => {
     try {
       const response = await openai.beta.threads.create();
-
       if (response && response.id) {
         // Extract threadId from the response
         return response.id;
@@ -25,16 +25,48 @@ const assistantFunctions = {
       throw error;
     }
   },
+  
 
-  addMessage: async (threadId, message) => {
+  uploadFile: async (filelocation) => {
+    try {
+
+      if (!filelocation) {
+        return;
+      }
+      const file = await openai.files.create({
+        file: fs.createReadStream(filelocation.path),
+        purpose: "assistants",
+      });
+      console.log("File in chat: ", file.id);
+
+      // Step 3: Delete the file from file location
+      fs.unlink(filelocation.path, (err) => {
+        if (err) {
+          console.error('Error deleting file:', err);
+          return;
+        }
+        console.log('File deleted successfully');
+      });
+
+      return file.id; // Return the file id
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      throw error;
+    }
+  },
+
+
+
+  addMessage: async (threadId, message,file) => {
     try {
       // Add the message to the thread using OpenAI
-      console.log(threadId, message);
+      // console.log(threadId, message);
       const response = await openai.beta.threads.messages.create(threadId, {
         role: "user",
         content: message,
+        file_ids: file
       });
-      console.log(response);
+      console.log("ADD MESSAGE",response);
       return response;
     } catch (error) {
       console.error("Error adding message:", error);
@@ -70,7 +102,7 @@ const assistantFunctions = {
                 AssistantMessage = messageText;
               }
 
-              console.log(messageText);
+              // console.log(messageText);
 
               if (UserMessage && AssistantMessage) {
                 break;
@@ -112,7 +144,7 @@ const assistantFunctions = {
         assistant_id: process.env.OPENAI_ASSISTANT_ID,
       };
       const respose = await openai.beta.threads.runs.create(threadId, options);
-      console.log(respose);
+      console.log(respose.id);
       return respose.id;
     } catch (error) {
       console.log(error.name, error.message);
@@ -126,9 +158,8 @@ const assistantFunctions = {
 
       do {
         const run = await openai.beta.threads.runs.retrieve(threadId, runID);
-        console.log(run);
-        runstatus = run.status; // Remove the 'const' keyword here
-        console.log(runstatus);
+        runstatus = run.status;
+        // console.log(runstatus);
 
         if (runstatus !== "completed") {
           // Add a delay before retrying the function
