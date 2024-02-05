@@ -358,6 +358,7 @@ router.get("/userDetails", CheckUser, async (req, res) => {
       lName: user.lName,
       expireAt:  user.expireAt,
       inviteCode: user.inviteCode
+      
     };
 
     res.status(200).json(userDetails);

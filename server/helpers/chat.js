@@ -485,6 +485,7 @@ const chatHelper = {
     
         const user = await db.collection(collections.USER).findOne({ _id: new ObjectId(userId) });  
         
+        
         if (!user) {
           reject("User not found");
           return;

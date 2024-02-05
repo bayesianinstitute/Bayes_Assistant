@@ -280,16 +280,7 @@ const Modal = ({ changeColorMode, settingRef }) => {
     const fetchInvitationStatus = async () => {
       try {
         const response = await axios.get("/api/chat/userDetails");
-        {
-          console.log("UserDetails : ", response);
-        }
-        // const response = {
-        //   data: {
-        // status: "true",
-        // expireAt:"2024-01-06T20:10:19.149Z"
-        // inviteCode:"c696d39f-66d7-4d19-bffa-919053972104"
-        //   },
-        // };
+
         const { status, expireAt, inviteCode } = response.data;
 
         if (status) {
