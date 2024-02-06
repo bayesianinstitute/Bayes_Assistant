@@ -3,11 +3,13 @@ import React, { Fragment, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import {
+  Avatar,
   Bar,
   LogOut,
   Message,
   Plus,
   Settings,
+  Tab,
   Tick,
   Trash,
   Xicon,
@@ -31,8 +33,8 @@ const Menu = ({ changeColorMode }) => {
   const { history, user } = useSelector((state) => state);
   const [confirm, setConfim] = useState(false);
   const isUserExpired = user.expireAt && new Date(user.expireAt) < new Date();
-  console.log("User:", user);
-  console.log("Is User Expired:", isUserExpired);
+  // console.log("User:", user);
+  // console.log("Is User Expired:", isUserExpired);
 
   const logOut = async () => {
     if (window.confirm("Do you want log out")) {
@@ -148,15 +150,12 @@ const Menu = ({ changeColorMode }) => {
         <div className="end">
           <button
             onClick={() => {
-              if (!isUserExpired) {
-                if (path.includes("/chat")) {
-                  navigate("/");
-                } else {
-                  navigate("/chat");
-                }
+              if (path.includes("/chat")) {
+                navigate("/");
+              } else {
+                navigate("/chat");
               }
             }}
-            disabled={isUserExpired} // Disable the button if the user is expired
           >
             <Plus />
           </button>
@@ -175,7 +174,6 @@ const Menu = ({ changeColorMode }) => {
                 navigate("/chat");
               }
             }}
-            disabled={isUserExpired}
           >
             <Plus />
             New chat
@@ -269,12 +267,15 @@ const Modal = ({ changeColorMode, settingRef }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const [invitationCode, setInvitationCode] = useState("");
-  const [showinvitationCode, setShowinvitationCodeInvitationCode] =
-    useState("");
-  const [isUpdateValid, setIsUpdateValid] = useState(false);
-  const [expirationDate, setExpirationDate] = useState(null);
-  const [showUpdateButton, setShowUpdateButton] = useState(false);
+  const [modalState, setModalState] = useState({
+    selectedModel: "",
+    invitationCode: "",
+    showinvitationCode: "",
+    isUpdateValid: false,
+    expirationDate: null,
+    showUpdateButton: false,
+    rerender: false, 
+  });
 
   useEffect(() => {
     const fetchInvitationStatus = async () => {
@@ -284,13 +285,19 @@ const Modal = ({ changeColorMode, settingRef }) => {
         const { status, expireAt, inviteCode } = response.data;
 
         if (status) {
-          setExpirationDate(expireAt);
-          setIsUpdateValid(true);
-          setShowinvitationCodeInvitationCode(inviteCode);
+          setModalState((prevState) => ({
+            ...prevState,
+            expirationDate: expireAt,
+            isUpdateValid: true,
+            showinvitationCode: inviteCode,
+          }));
         } else {
-          setExpirationDate(expireAt);
-          setShowUpdateButton(true);
-          setShowinvitationCodeInvitationCode(inviteCode);
+          setModalState((prevState) => ({
+            ...prevState,
+            expirationDate: expireAt,
+            showUpdateButton: true,
+            showinvitationCode: inviteCode,
+          }));
         }
       } catch (error) {
         console.error("Error fetching invitation status:", error.message);
@@ -298,10 +305,13 @@ const Modal = ({ changeColorMode, settingRef }) => {
     };
 
     fetchInvitationStatus();
-  }, []);
+  }, [modalState.rerender]); // Trigger effect when rerender state changes
 
   const handleInvitationCodeChange = (event) => {
-    setInvitationCode(event.target.value);
+    setModalState((prevState) => ({
+      ...prevState,
+      invitationCode: event.target.value,
+    }));
   };
 
   const handleUpdateInvitationCode = async () => {
@@ -312,24 +322,82 @@ const Modal = ({ changeColorMode, settingRef }) => {
     if (confirmUpdate) {
       try {
         const response = await axios.put("/api/chat/update-invitation-code", {
-          code: invitationCode,
+          code: modalState.invitationCode,
         });
 
         console.log("Invitation code updated successfully:", response.data);
 
-        // Update expiration date and set update validity
         if (response.data?.expireAt) {
-          setExpirationDate(response.data.expireAt);
-          setIsUpdateValid(true);
-          setShowUpdateButton(false); // Hide update button after successful update
+          setModalState((prevState) => ({
+            ...prevState,
+            expirationDate: response.data.expireAt,
+            isUpdateValid: true,
+            showUpdateButton: false,
+          }));
         } else {
-          setExpirationDate(response.data.expireAt);
+          setModalState((prevState) => ({
+            ...prevState,
+            expirationDate: response.data.expireAt,
+          }));
         }
+
+        setModalState((prevState) => ({
+          ...prevState,
+          rerender: !prevState.rerender, // Trigger rerender after update
+        }));
       } catch (error) {
         console.error("Error updating invitation code:", error.message);
+        alert("Invalid invitation code");
+        setModalState((prevState) => ({
+          ...prevState,
+          invitationCode: "", 
+        }));
       }
     } else {
       console.log("Invitation code update canceled.");
+    }
+  };
+
+  useEffect(() => {
+    const getModelType = async () => {
+      try {
+        const response = await axios.get("/api/chat/modelType");
+        setModalState((prevState) => ({
+          ...prevState,
+          selectedModel: response.data.data.modelType,
+        }));
+      } catch (error) {
+        console.error("Error while fetching model type:", error.message);
+        setModalState((prevState) => ({
+          ...prevState,
+          selectedModel: "gpt-4-1106-preview",
+        }));
+      }
+    };
+
+    getModelType();
+  }, []);
+
+  const handleModelChange = async (event) => {
+    const newModelType = event.target.value;
+    setModalState((prevState) => ({
+      ...prevState,
+      selectedModel: newModelType,
+    }));
+    await setModelTypeAPI(newModelType);
+    console.log("Model changed", newModelType);
+  };
+
+  const setModelTypeAPI = async (newModelType) => {
+    // Make an API call to set the new model type using Axios
+    try {
+      const response = await axios.put("/api/chat/modelType", {
+        modelType: newModelType,
+      });
+
+      console.log("Model type set successfully:", response.data);
+    } catch (error) {
+      console.error("Error while setting model type:", error.message);
     }
   };
 
@@ -394,36 +462,13 @@ const Modal = ({ changeColorMode, settingRef }) => {
             <div></div>
           </button>
 
-          {/* Invitation code input */}
-          {showUpdateButton ? (
-            <div className="invitation-code-input">
-              <p>Invitation Code:</p>
-              <input
-                type="text"
-                placeholder="Enter Invitation Code"
-                value={invitationCode}
-                onChange={handleInvitationCodeChange}
-                disabled={isUpdateValid}
-              />
-              <div className="bottom">
-                {showUpdateButton && (
-                  <button
-                    onClick={handleUpdateInvitationCode}
-                    disabled={isUpdateValid}
-                  >
-                    Update Code
-                  </button>
-                )}
-              </div>
-              <div>
-                <p>code Expire at : {expirationDate}</p>
-                <p>Your last Code is : {showinvitationCode}</p>
-              </div>
-            </div>
-          ) : null}
+          {/* Dropdown menu for selecting the model */}
 
-          {/* Display expiration date if update is valid */}
-          {isUpdateValid && <p>code valid until: {expirationDate}</p>}
+          {/* <p>Select Model:</p>
+          <select value={modalState.selectedModel} onChange={handleModelChange}>
+            <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
+            <option value="gpt-4-1106-preview">GPT-4-Preview</option>
+          </select> */}
         </div>
 
         <div className="bottum">
@@ -431,6 +476,49 @@ const Modal = ({ changeColorMode, settingRef }) => {
           <button className="end" onClick={deleteAccount}>
             Delete account
           </button>
+        </div>
+        <div className="InviationCode">
+          {/* Invitation code input */}
+          {modalState.showUpdateButton && !modalState.isUpdateValid && (
+            <div className="bottom">
+              <p>Invitation Code:</p>
+              <input
+                type="text"
+                placeholder="Enter Invitation Code"
+                value={modalState.invitationCode}
+                onChange={handleInvitationCodeChange}
+                disabled={modalState.isUpdateValid}
+              />
+              <div>
+                <button
+                  onClick={handleUpdateInvitationCode}
+                  disabled={modalState.isUpdateValid}
+                >
+                  Update Code
+                </button>
+              </div>
+              <div className="bottom">
+                <p>
+                  Code Expire at : <b> {modalState.expirationDate}</b>
+                </p>
+                <p>
+                  Your last Code : <b>{modalState.showinvitationCode}</b>{" "}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Display expiration date if update is valid */}
+          {modalState.isUpdateValid && (
+            <div className="bottom">
+              <p>
+                Code Valid Until:<b> {modalState.expirationDate} </b>
+              </p>
+              <p>
+                Your Current Code :<b> {modalState.showinvitationCode}</b>
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
