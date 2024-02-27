@@ -1,4 +1,4 @@
-# Lawyer Assistant
+# Bayes Assistant
 
 ## Configuration
 
