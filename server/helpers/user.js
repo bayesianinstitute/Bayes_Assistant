@@ -458,13 +458,13 @@ export default {
 
 
         // Check if expiration date has passed
-        if (expireCodeTime && currentDate > expireCodeTime) {
-          let mess=`Invitation code has expired . please subscribe new code to continue`
-          console.log(mess)
-          // sendErrorEmail(mess)
-          reject({ status: 410,expired: true, text: "Invitation code has expired" });
-          return;
-        }
+        // if (expireCodeTime && currentDate > expireCodeTime) {
+        //   let mess=`Invitation code has expired . please subscribe new code to continue`
+        //   console.log(mess)
+        //   // sendErrorEmail(mess)
+        //   reject({ status: 410,expired: true, text: "Invitation code has expired" });
+        //   return;
+        // }
 
         resolve(user);
       } catch (err) {

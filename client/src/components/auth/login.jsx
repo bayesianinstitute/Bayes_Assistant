@@ -1,129 +1,125 @@
-import React, { useReducer, useState } from 'react'
-import { GptIcon, Google, Microsoft } from '../../assets'
-import { Link, useNavigate } from 'react-router-dom'
-import FormFeild from './FormFeild'
-import { useGoogleLogin } from '@react-oauth/google'
-import { useDispatch } from 'react-redux'
-import { insertUser } from '../../redux/user'
-import instance from '../../config/instance'
-import './style.scss'
-import ReCAPTCHA from 'react-google-recaptcha';
+import React, { useReducer, useState } from "react";
+import { GptIcon, Google, Microsoft } from "../../assets";
+import { Link, useNavigate } from "react-router-dom";
+import FormFeild from "./FormFeild";
+import { useGoogleLogin } from "@react-oauth/google";
+import { useDispatch } from "react-redux";
+import { insertUser } from "../../redux/user";
+import instance from "../../config/instance";
+import "./style.scss";
+import ReCAPTCHA from "react-google-recaptcha";
 
 const reducer = (state, { type, status }) => {
-    switch (type) {
-        case 'filled':
-            return { filled: status }
-        case 'error':
-            return { error: status, filled: state.filled }
-        default: return state
-    }
-}
+  switch (type) {
+    case "filled":
+      return { filled: status };
+    case "error":
+      return { error: status, filled: state.filled };
+    default:
+      return state;
+  }
+};
 
 const LoginComponent = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
 
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
+  const [state, stateAction] = useReducer(reducer, {
+    filled: false,
+    error: false,
+  });
 
-    const [state, stateAction] = useReducer(reducer, {
-        filled: false,
-        error: false
-    })
+  const [formData, setFormData] = useState({
+    email: "",
+    pass: "",
+    manual: true,
+  });
 
-    const [formData, setFormData] = useState({
-        email: '',
-        pass: '',
-        manual: true
-    })
+  const [captchaToken, setCaptchaToken] = useState("");
 
-    const [captchaToken, setCaptchaToken] = useState('');
+  const handleRecaptchaChange = (token) => {
+    setCaptchaToken(token);
+  };
 
-    const handleRecaptchaChange = (token) => {
-        setCaptchaToken(token);
-      };
+  const handleInput = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
 
-    const handleInput = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        })
+  const googleAuth = useGoogleLogin({
+    onSuccess: (response) => {
+      formHandle(null, {
+        manual: false,
+        token: response.access_token,
+      });
+    },
+  });
+
+  const formHandle = async (e, googleData) => {
+    e?.preventDefault();
+    let res = null;
+    try {
+      if (!captchaToken) {
+        // reCAPTCHA token not present or verified
+        alert("Please complete the reCAPTCHA verification.");
+        return;
+      }
+      res = await instance.get("/api/user/login", {
+        params: googleData || formData,
+      });
+    } catch (err) {
+      console.log(err);
+      if (err?.response?.data?.status === 422) {
+        stateAction({ type: "error", status: true });
+      }
+    } finally {
+      if (res?.data) {
+        stateAction({ type: "error", status: false });
+        dispatch(insertUser(res.data.data));
+        navigate("/");
+      }
     }
+  };
 
-    const googleAuth = useGoogleLogin({
-        onSuccess: response => {
-            formHandle(null, {
-                manual: false,
-                token: response.access_token
-            })
-        }
-    })
+  return (
+    <div className="Contain">
+      <div className="icon">{/*<GptIcon />*/}</div>
 
-    const formHandle = async (e, googleData) => {
-        e?.preventDefault()
-        let res = null
-        try {
-            if (!captchaToken) {
-                // reCAPTCHA token not present or verified
-                alert('Please complete the reCAPTCHA verification.');
-                return;
-            }
-            res = await instance.get('/api/user/login', {
-                params: googleData || formData
-            })
-        } catch (err) {
-            console.log(err)
-            if (err?.response?.data?.status === 422) {
-                stateAction({ type: 'error', status: true })
-            }
-        } finally {
-            if (res?.data) {
-                stateAction({ type: 'error', status: false })
-                dispatch(insertUser(res.data.data))
-                navigate('/')
-            }
-        }
-    }
+      <div>
+        {!state.filled ? <h1>Welcome back</h1> : <h1>Enter your password</h1>}
+      </div>
 
-    return (
-        <div className='Contain'>
-            <div className='icon'>
-                {/*<GptIcon />*/}
-            </div>
-
+      {!state.filled ? (
+        <div className="options">
+          <form
+            className="manual"
+            onSubmit={(e) => {
+              e.preventDefault();
+              stateAction({ type: "filled", status: true });
+            }}
+          >
             <div>
-                {!state.filled ? <h1>Welcome back</h1>
-                    : <h1>Enter your password</h1>}
-
+              <FormFeild
+                value={formData.email}
+                name={"email"}
+                label={"Email address"}
+                type={"email"}
+                handleInput={handleInput}
+              />
             </div>
+            <div>
+              <button type="submit">Continue</button>
+            </div>
+          </form>
 
-            {
-                !state.filled ? (
-                    <div className='options'>
-                        <form className="manual" onSubmit={(e) => {
-                            e.preventDefault()
-                            stateAction({ type: 'filled', status: true })
-                        }}>
-                            <div>
+          <div data-for="acc-sign-up-login">
+            <span>Don't have an account?</span>
+            <Link to={"/signup"}>Sign up</Link>
+          </div>
 
-                                <FormFeild
-                                    value={formData.email}
-                                    name={'email'}
-                                    label={"Email address"}
-                                    type={"email"}
-                                    handleInput={handleInput}
-                                />
-                            </div>
-                            <div>
-                            
-                                <button type='submit' >Continue</button>
-                            </div>
-                        </form>
-
-                        <div data-for="acc-sign-up-login">
-                            <span>Don't have an account?</span>
-                            <Link to={'/signup'}>Sign up</Link>
-                        </div>
-
-                        {/*<div className="extra">
+          {/*<div className="extra">
                             <div className="divide">
                                 <span>OR</span>
                             </div>
@@ -134,61 +130,65 @@ const LoginComponent = () => {
                             </div>
 
                         </div>*/}
-                    </div>
-                ) : (
-                    <form className='Form' onSubmit={formHandle}>
-                        <div>
-                            <div className="email">
-                                <button type='button' onClick={() => {
-                                    stateAction({ type: 'filled', status: false })
-                                }} >Edit</button>
+        </div>
+      ) : (
+        <form className="Form" onSubmit={formHandle}>
+          <div>
+            <div className="email">
+              <button
+                type="button"
+                onClick={() => {
+                  stateAction({ type: "filled", status: false });
+                }}
+              >
+                Edit
+              </button>
 
-                                <FormFeild
-                                    value={formData.email}
-                                    name={'email'}
-                                    type={"email"}
-                                    isDisabled />
+              <FormFeild
+                value={formData.email}
+                name={"email"}
+                type={"email"}
+                isDisabled
+              />
+            </div>
 
-                            </div>
+            <ReCAPTCHA
+              sitekey={import.meta.env.VITE_SITE_KEY}
+              onChange={handleRecaptchaChange}
+            />
+            <div className="password">
+              <FormFeild
+                value={formData.pass}
+                name={"pass"}
+                label={"Password"}
+                type={"password"}
+                handleInput={handleInput}
+                error={state?.error}
+              />
+            </div>
 
-                            <ReCAPTCHA
-                            sitekey="6Ld4WmApAAAAAISLYrsC2LEF_RAE38TR_96xmkVp"
-                            onChange={handleRecaptchaChange}
-                          />
+            <div>
+              {state?.error && (
+                <div className="error">
+                  <div>!</div> Email or password wrong.
+                </div>
+              )}
+            </div>
 
-                            <div className="password">
+            <button type="submit">Continue</button>
 
-                                <FormFeild
-                                    value={formData.pass}
-                                    name={'pass'}
-                                    label={"Password"}
-                                    type={"password"}
-                                    handleInput={handleInput}
-                                    error={state?.error}
-                                />
+            <div className="forgot">
+              <Link to={"/forgot"}>Forgot password?</Link>
+            </div>
+          </div>
+          <div data-for="acc-sign-up-login">
+            <span>Don't have an account?</span>
+            <Link to={"/signup"}>Sign up</Link>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+};
 
-                            </div>
-
-                            <div>
-                                {state?.error && <div className='error'><div>!</div> Email or password wrong.</div>}
-                            </div>
-
-                            <button type='submit'>Continue</button>
-
-                            <div className='forgot' >
-                                <Link to={'/forgot'} >Forgot password?</Link>
-                            </div>
-                        </div>
-                        <div data-for="acc-sign-up-login">
-                            <span>Don't have an account?</span>
-                            <Link to={'/signup'}>Sign up</Link>
-                        </div>
-                    </form>
-                )
-            }
-        </div >
-    )
-}
-
-export default LoginComponent
-
+export default LoginComponent;

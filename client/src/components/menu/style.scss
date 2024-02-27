@@ -328,6 +328,36 @@ header {
         }
       }
     }
+    .InviationCode {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-size: 2rem; /* Adjust the font size as needed */
+      line-height: 1.5rem; /* Adjust line height as needed */
+      
+      input[type="text"] {
+        width: 330px; /* Adjust the width as needed */
+        padding: 0.5rem; /* Adjust padding as needed */
+        margin-bottom: 1rem; /* Add some space between input and button */
+        font-size: 1rem; /* Adjust the font size of input */
+      }
+
+      
+    
+      button {
+        font-size: 1rem; /* Adjust the font size of button */
+        padding: 0.5rem 1rem; /* Adjust padding as needed */
+        background-color: #007bff; /* Button background color */
+        cursor: pointer;
+      }
+    
+      .bottom {
+        font-size: 0.975rem; /* Adjust font size of paragraph elements */
+        line-height: 1.25rem; /* Adjust line height as needed */
+        margin-top: 1rem; /* Add some space between sections */
+        
+      }
+    }
   }
 }
 
@@ -419,4 +449,18 @@ header {
       }
     }
   }
+}
+
+// Add the following CSS styles to your style.scss or the appropriate stylesheet
+.invitation-code-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.invitation-code-input input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  flex: 1; /* Take remaining space */
 }
