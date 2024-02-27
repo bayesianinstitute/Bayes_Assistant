@@ -1,20 +1,9 @@
 # Lawyer Assistant
 
-## Features
+## Configuration
 
-- PWA
-- Offline
-- Password login
-- Forgot password
-- Google login & signup
-- Chat
-- Auto chat save
-- History Save
-- Account delete option
-- Light & Dark mode
-- Responsive Design
-
-## AWS EC2 Instance Setup
+<details>
+<summary><strong>AWS EC2 Instance Setup</strong></summary>
 
 1. **Create an AWS Account:**
 
@@ -76,53 +65,13 @@
 14. **Access Your EC2 Instance:**
 
 - Once the instance is running, use the generated key pair to SSH into your instance. Example:
-  ```bash
-  ssh -i /path/to/your/key.pem ubuntu@your-instance-ip
-  ```
+`bash
+     ssh -i /path/to/your/key.pem ubuntu@your-instance-ip
+     `
+</details>
 
-## Prerequisites
-
-- get your api key from https://openai.com/api/
-
-Make sure you have installed all of the following prerequisites on your development machine:
-
-- Node Js & Npm [Download and Install](https://nodejs.org/en)
-- MongoDB [Download and Install](https://www.mongodb.com/docs/manual/installation/)
-- Git [Download and Install](https://git-scm.com/downloads)
-
-## Node.js and npm Versions
-
-This project is developed and tested using the following versions of Node.js and npm:
-
-- Node.js: 18.16.1
-- npm: 9.51.1
-
-## Node js
-
-1. **Install NVM as your regular user:**
-
-   ```bash
-   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-   ```
-
-2. **Load NVM into the shell:**
-
-   ```bash
-   source ~/.nvm/nvm.sh
-   ```
-
-3. **Install the desired Node.js version:**
-   ```bash
-   nvm install 18.16.1
-   ```
-
-## npm install
-
-```bash
-nvm install 9.5.1
-```
-
-## MongoDB Atlas Setup
+<details>
+<summary><strong>MongoDB Atlas Setup</strong></summary>
 
 1. **Create MongoDB Atlas Account:**
 
@@ -150,7 +99,59 @@ nvm install 9.5.1
    - In the left sidebar, click on "Clusters" and then on your cluster's "Connect" button.
    - Choose "Connect Your Application" and copy the connection string.
 
+</details>
+
+## Prerequisites
+
+- get your api key from https://openai.com/api/
+
+Make sure you have installed all of the following prerequisites on your development machine:
+
+- Node Js & Npm [Download and Install](https://nodejs.org/en)
+- MongoDB [Download and Install](https://www.mongodb.com/docs/manual/installation/)
+- Git [Download and Install](https://git-scm.com/downloads)
+
+## Node.js and npm Versions
+
+This project is developed and tested using the following versions of Node.js and npm:
+
+- Node.js: 18.16.1
+- npm: 9.51.1
+
+<details>
+<summary><strong>Installation Node js</strong></summary>
+
+1. **Install NVM as your regular user:**
+
+   ```bash
+   curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+   ```
+
+2. **Load NVM into the shell:**
+
+   ```bash
+   source ~/.nvm/nvm.sh
+   ```
+
+3. **Install the desired Node.js version:**
+   ```bash
+   nvm install 18.16.1
+   ```
+
+</details>
+
+### Install pm2 package
+
+npm then install pm2 for production monitoring
+
+```bash
+npm install pm2 -g
+```
+
 ## Environment Variables
+
+<details>
+<summary><strong>Server env</strong></summary>
 
 To run this project, you will need to add the following environment variables to your .env file in server directory
 
@@ -180,32 +181,47 @@ To run this project, you will need to add the following environment variables to
 
 `RECAPTCHA_SECRET_KEY`
 
+</details>
+<details>
+<summary><strong>Client env</strong></summary>
+
 To run this project, you will need to add the following environment variables to your .env.local file in client directory
 
 `VITE_CLIENT_ID` #Google login api client id
+`VITE_SITE_KEY` # Google RECAPTCHA_SITE_KEY
+
+</details>
 
 ## Run Locally
 
 Clone the project
 
 ```bash
-  git clone https://github.com/bayesianinstitute/GPT-Clone.git
+  git clone https://github.com/bayesianinstitute/Bayes_Assistant.git
 ```
 
 ### Checkout Branch
 
-#### For Ecommerce code
+#### For Data Science
+
+```bash
+   git checkout main
+```
+
+#### Or
+
+#### For Lawyer
 
 ```bash
    git checkout lawyer
 ```
 
-##To Start BackEnd
+### To Start BackEnd
 
 Go to the server directory
 
 ```bash
-  cd ChatGPT/server
+  cd Bayes_Assistant/server
 ```
 
 Install dependencies
@@ -220,12 +236,12 @@ Start
    pm2 start app.js
 ```
 
-##To Start FrontEnd
+### To Start FrontEnd
 
 #### Go to the client directory
 
 ```bash
-  cd ChatGPT/client
+  cd Bayes_Assistant/client
 ```
 
 #### Install dependencies
@@ -246,26 +262,14 @@ Start
    cp -r dist ../server
 ```
 
-bind port
+bind port Allow bind to 80:
 
 ```bash
-
-   Allow bind to 80:  sudo setcap 'cap_net_bind_service=+ep' /home/ubuntu/.nvm/versions/node/v18.16.1/bin/node
+sudo setcap 'cap_net_bind_service=+ep' /home/ubuntu/.nvm/versions/node/v18.16.1/bin/node
 ```
 
 Start
 
 ```bash
-
    pm2 start npm --name "client" -- run preview
 ```
-
-## Technology Used
-
-#vite #reactjs #scss #redux-toolkit
-
-#nodejs #expressjs #mongodb #jsonwebtoken authentication
-
-#javascript
-
-#openai #chatgpt
